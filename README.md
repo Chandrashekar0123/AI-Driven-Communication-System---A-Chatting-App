@@ -2,8 +2,6 @@
 
 A high-performance, professional full-stack communication platform featuring state-of-the-art AI integration and a premium "Cinema Mode" dashboard.
 
-![Premium UI Showcase](./demo_recording.webp)
-
 ## ✨ Premium Features
 
 ### 🎬 Professional 'Cinema Mode' Layout
@@ -11,69 +9,87 @@ A high-performance, professional full-stack communication platform featuring sta
 - **Glassmorphism Design System**: Sleek, modern aesthetics with backdrop-blur effects and dynamic mesh gradients.
 - **Responsive Architecture**: Gracefully adapts from compact sidebars to full-width desktop dashboards.
 
-### 🧠 Gemini AI Suite
-- **Smart Suggestions**: Context-aware, 3-pill reply recommendations generated in real-time based on discussion history.
-- **Conversation Summarization**: One-click AI recaps that distill long chat histories into professional 1-2 sentence summaries.
-- **Relevant Insights**: AI responses are strictly tuned to the current API data and communication context.
+### 🧠 Multi-Provider AI Engine
+Powered by an intelligent cascade of **Gemini 2.5/2.0**, **HuggingFace**, and **OpenAI GPT-3.5**:
+- **Smart Auto-Replies**: Context-aware, 3-pill reply recommendations generated in real-time.
+- **Voice Messages (STT)**: Built-in Speech-to-Text via Web Speech API and HuggingFace Whisper.
+- **Text-to-Speech (TTS)**: Listen to any message with built-in native TTS.
+- **Magic AI Hub (12 Features)**:
+  - Summarize conversations
+  - Sentiment & Emotion analysis
+  - Extract Action Items / Tasks
+  - Keyphrase Extraction
+  - Translate to English
+  - Tone Rewriting
+  - Grammar Correction
+  - Smart Search & Spam Moderation
+  - Emoji Suggestions
 
-### ⚡ Real-Time Infrastructure
-- **Socket.IO Sync**: Instant, low-latency message delivery and online status tracking.
-- **Cloudinary Media Engine**: Persistent, high-fidelity image storage and sharing.
-- **MongoDB Persistence**: Reliable data storage for all chat history and user profiles.
+### 💬 Real-Time Full-Stack Core
+- **Real-Time Engine**: Built with Socket.io for instantaneous message delivery and typing indicators.
+- **Secure Authentication**: JWT-based auth with encrypted credentials.
+- **Global State Management**: Powered by Zustand for lightning-fast UI updates.
 
-### 🎨 Advanced UX & Customization
-- **Theme Engine**: Seamlessly switch between multiple professional themes (Luxury, Coffee, Retro, etc.).
-- **Secure Auth**: Robust JWT-based authentication and authorization.
-- **Privacy First**: All branding ("Chatty") has been purified for a white-label, professional feel.
+---
 
-## 🛠️ Tech Stack
+## 🛠️ Technology Stack
+- **Frontend**: React (Vite), TailwindCSS, Zustand, Lucide Icons, React Router
+- **Backend**: Node.js, Express, MongoDB, Socket.io
+- **AI Models**: Google Gemini 2.5 Flash, Gemini 2.0 Flash Lite, HuggingFace Inference API, OpenAI
 
-- **Frontend**: React, Tailwind CSS, DaisyUI, Zustand, Lucide React
-- **Backend**: Node.js, Express.js
-- **Database**: MongoDB
-- **Real-Time**: Socket.IO
-- **AI**: Google Gemini AI (1.5 Flash)
-- **Storage**: Cloudinary
+---
 
-## 🚀 Quick Start
+## 🚀 Getting Started
 
-### 1. Clone the repository
+### 1. Clone & Install
 ```bash
-git clone https://github.com/Chandrashekar0123/AI-Driven-Communication-System---A-Chatting-App.git
+# Install frontend dependencies
+cd frontend
+npm install
+
+# Install backend dependencies
+cd ../backend
+npm install
 ```
 
-### 2. Environment Setup
-Create a `.env` file in the `backend` directory:
+### 2. Environment Variables
+Create a `.env` file in the `backend` directory (see `backend/.env.example`):
 ```env
 PORT=5001
-MONGODB_URI=your_mongodb_uri
-JWT_SECRET=your_jwt_secret
+MONGODB_URI=your_mongo_uri
+JWT_SECRET=your_secret
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
-GOOGLE_API_KEY=your_gemini_api_key
-NODE_ENV=development
+
+# AI Keys
+GOOGLE_API_KEY=your_gemini_key
+HUGGINGFACE_API_KEY=your_hf_key
+OPENAI_API_KEY=your_openai_key
 ```
 
-### 3. Install Dependencies
+Create a `.env` file in the `frontend` directory:
+```env
+VITE_HUGGINGFACE_API_KEY=your_hf_key
+```
+
+### 3. Run the Application
 ```bash
-# Install backend dependencies
+# Terminal 1 (Backend)
 cd backend
-npm install
-
-# Install frontend dependencies
-cd ../frontend
-npm install
-```
-
-### 4. Run the Application
-```bash
-# Run backend (from /backend)
 npm run dev
 
-# Run frontend (from /frontend)
+# Terminal 2 (Frontend)
+cd frontend
 npm run dev
 ```
+
+---
+
+## 🔒 Security
+- All sensitive API keys are stored in `.env` and ignored via `.gitignore`.
+- Intelligent rate-limit handling prevents API abuse.
+- Local rule-based AI fallback ensures the app never crashes even if external APIs are exhausted.
 
 ## 🎥 Demo
 Check the `demo_recording.webp` file in the root directory for a full walkthrough of the Seshu Kumar vs. Chandu real-time AI messaging flow.

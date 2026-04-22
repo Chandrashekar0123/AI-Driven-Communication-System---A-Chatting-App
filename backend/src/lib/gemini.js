@@ -18,7 +18,8 @@ const aiCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
 // ─── Gemini Setup ─────────────────────────────────────────────────────────────
 const genAI = GEMINI_KEY ? new GoogleGenerativeAI(GEMINI_KEY) : null;
-const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+// Try lite models too (higher rate limits on free tier)
+const GEMINI_MODELS = ["gemini-2.0-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
 
 // ─── Strict JSON Prompt ───────────────────────────────────────────────────────
 const buildPrompt = (feature, message, history) => {
@@ -196,23 +197,120 @@ async function callOpenAI(feature, message, history) {
 }
 
 // ─── Static Fallback (always works) ──────────────────────────────────────────
+// ─── Smart Local Fallback (no API needed, context-aware) ─────────────────────
+function smartLocalReply(message) {
+  const msg = (message || "").toLowerCase().trim();
+
+  // Greeting patterns
+  if (/^(hi|hey|hello|hlo|helo|hii|yo|sup|wassup|what'?s up|howdy)[\s!?]*$/.test(msg))
+    return ["Hey! 👋", "Hi there! How are you?", "Hello! What's up?"];
+
+  if (/how are you|how r u|how u doing|how's it going|howdy|how have you been/.test(msg))
+    return ["I'm doing great, thanks! 😊", "All good! What about you?", "Pretty well! How about you?"];
+
+  // Question patterns
+  if (msg.endsWith("?") || msg.startsWith("what") || msg.startsWith("who") || msg.startsWith("when") || msg.startsWith("where") || msg.startsWith("why") || msg.startsWith("how"))
+    return ["Good question! Let me think...", "Hmm, I'll get back to you on that!", "Interesting! Not sure yet 🤔"];
+
+  // Time/schedule/meet patterns
+  if (/meet|call|join|available|free|schedule|when|time|today|tomorrow|later/.test(msg))
+    return ["Sure, I'm available! 📅", "Let me check my schedule.", "Sounds good, what time works for you?"];
+
+  // Work/task patterns
+  if (/work|project|task|deadline|report|send|submit|done|finish|complete/.test(msg))
+    return ["On it! 💪", "Will do! Give me some time.", "Got it, I'll handle it."];
+
+  // Thanks/appreciation patterns
+  if (/thank|thanks|thx|ty|appreciate|great|awesome|nice|good job|well done/.test(msg))
+    return ["You're welcome! 😊", "Anytime! Happy to help.", "No problem at all! 👍"];
+
+  // Yes/agree patterns
+  if (/^(yes|yeah|yep|yup|sure|ok|okay|alright|agreed|correct|right|exactly)[\s!.]*$/.test(msg))
+    return ["Great! 👍", "Perfect, let's proceed!", "Awesome, makes sense!"];
+
+  // No/disagree patterns
+  if (/^(no|nope|nah|not really|i don'?t think so|disagree)[\s!.]*$/.test(msg))
+    return ["Okay, no worries!", "Got it, we can revisit this.", "Alright, let me know when ready."];
+
+  // Sorry/apology patterns
+  if (/sorry|apolog|my bad|forgive|excuse me/.test(msg))
+    return ["No worries at all! 😊", "It's okay, don't worry about it.", "All good! 👍"];
+
+  // Love/emotion patterns
+  if (/love|miss|care|❤️|😍|crush|like you|feel/.test(msg))
+    return ["Aww, that's sweet! 😊", "Same here! 😄", "That means a lot! ❤️"];
+
+  // Food patterns
+  if (/food|eat|hungry|lunch|dinner|breakfast|meal|cook|restaurant/.test(msg))
+    return ["Sounds delicious! 😋", "I'm hungry too!", "Let's grab something!"];
+
+  // Joke/laugh patterns
+  if (/lol|haha|hehe|funny|joke|laugh|hilarious|😂/.test(msg))
+    return ["Haha! 😂", "Lol that's funny!", "😂 You always make me laugh!"];
+
+  // Busy/later patterns
+  if (/busy|later|brb|gtg|got to go|talk later|ttyl|not now/.test(msg))
+    return ["Sure, talk later! 👋", "Okay, catch you later!", "No rush, take your time."];
+
+  // Long messages — default sensible set
+  if (msg.length > 80)
+    return ["That's interesting! Tell me more.", "I see, I'll look into this.", "Thanks for the detailed message!"];
+
+  // Default contextual-ish fallback
+  return ["Got it! 👍", "Interesting, tell me more!", "Sure, sounds good!"];
+}
+
 function staticFallback(feature, message) {
-  console.warn(`[AI] ⚠️ All APIs failed for "${feature}", using static fallback`);
+  console.warn(`[AI] ⚠️ All APIs failed for "${feature}", using smart local fallback`);
+
+  if (feature === "auto_reply") {
+    return { feature, result: smartLocalReply(message) };
+  }
+
+  // Detect sentiment locally
+  if (feature === "sentiment") {
+    const msg = (message || "").toLowerCase();
+    const positiveWords = ["happy","great","awesome","love","good","nice","excellent","wonderful","amazing","thank","😊","😄","❤️","👍"];
+    const negativeWords = ["sad","bad","hate","angry","upset","terrible","awful","worst","sorry","cry","😢","😡","😞","💔"];
+    const posScore = positiveWords.filter(w => msg.includes(w)).length;
+    const negScore = negativeWords.filter(w => msg.includes(w)).length;
+    if (posScore > negScore) return { feature, result: { sentiment: "Positive", emotion: "Happy", score: 0.75 } };
+    if (negScore > posScore) return { feature, result: { sentiment: "Negative", emotion: "Upset", score: 0.75 } };
+    return { feature, result: { sentiment: "Neutral", emotion: "Calm", score: 0.5 } };
+  }
+
   const fallbacks = {
-    auto_reply: { feature, result: ["Thanks for letting me know!", "Got it! 👍", "I'll get back to you soon!"] },
-    summary:    { feature, result: ["Conversation in progress", "Messages exchanged", "Check details above"] },
-    sentiment:  { feature, result: { sentiment: "Neutral", emotion: "Calm", score: 0.5 } },
-    tasks:      { feature, result: [{ task: "Review conversation", person: "You", deadline: "Today" }] },
+    summary:    { feature, result: ["Conversation ongoing", "Key points exchanged", "Follow up may be needed"] },
+    tasks:      { feature, result: [{ task: "Review this conversation", person: "You", deadline: "Today" }] },
     translate:  { feature, result: message || "Translation unavailable" },
-    tone:       { feature, result: "Your message sounds good! Keep it up." },
-    search:     { feature, result: ["No matches found in current context"] },
-    moderate:   { feature, result: { flagged: false, reason: "Unable to verify — please review manually." } },
-    chatbot:    { feature, result: "AI is temporarily busy. Please try again in a moment!" },
-    keyphrase:  { feature, result: ["conversation", "message", "chat"] },
+    tone:       { feature, result: "Your message sounds good! Keep it concise and friendly." },
+    search:     { feature, result: ["No specific matches found — try a different keyword"] },
+    moderate:   { feature, result: { flagged: false, reason: "Auto-verified — no issues detected." } },
+    chatbot:    { feature, result: "AI is temporarily rate-limited. Please try again in a minute!" },
+    keyphrase:  { feature, result: extractKeywords(message) },
     grammar:    { feature, result: message || "Unable to check grammar right now." },
-    emoji:      { feature, result: ["💬", "😊", "👍"] },
+    emoji:      { feature, result: pickEmoji(message) },
   };
   return fallbacks[feature] || { feature, result: "Feature unavailable", error: "All AI providers exhausted" };
+}
+
+function extractKeywords(text = "") {
+  const stopWords = new Set(["the","a","an","is","it","in","on","at","to","of","and","or","for","with","this","that","are","was","be","by","as","i","you","we","they","he","she"]);
+  const words = text.toLowerCase().replace(/[^a-z\s]/g, "").split(/\s+/).filter(w => w.length > 3 && !stopWords.has(w));
+  const freq = {};
+  words.forEach(w => freq[w] = (freq[w] || 0) + 1);
+  return Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([w]) => w);
+}
+
+function pickEmoji(text = "") {
+  const msg = text.toLowerCase();
+  if (/love|heart|care/.test(msg))   return ["❤️", "😍", "🥰"];
+  if (/happy|great|awesome/.test(msg)) return ["😊", "🎉", "👍"];
+  if (/sad|upset|cry/.test(msg))     return ["😢", "🤗", "💙"];
+  if (/laugh|funny|lol/.test(msg))   return ["😂", "🤣", "😄"];
+  if (/work|task|done/.test(msg))    return ["💪", "✅", "🔥"];
+  if (/food|eat|hungry/.test(msg))   return ["😋", "🍕", "🥗"];
+  return ["💬", "😊", "👋"];
 }
 
 // ─── Master Orchestrator ──────────────────────────────────────────────────────

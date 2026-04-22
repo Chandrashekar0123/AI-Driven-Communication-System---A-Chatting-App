@@ -93,7 +93,7 @@ npm run dev
 - Local rule-based AI fallback ensures the app never crashes even if external APIs are exhausted.
 
 ## 🎥 Demo
-Check the `demo_recording.webp` file in the root directory for a full walkthrough of the Seshu Kumar vs. Chandu real-time AI messaging flow.
+Check the `demo_video` file in the root directory for a full walkthrough of the Seshu Kumar vs. Chandu real-time AI messaging flow.
 
 ---
 Built with ❤️ by AI-Driven Communication Team.

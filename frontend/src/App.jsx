@@ -13,6 +13,7 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const AIChatbotPage = lazy(() => import("./pages/AIChatbotPage"));
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth, socket } = useAuthStore();
@@ -51,6 +52,7 @@ const App = () => {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
+          <Route path="/ai-chat" element={authUser ? <AIChatbotPage /> : <Navigate to="/login" />} />
         </Routes>
       </Suspense>
 

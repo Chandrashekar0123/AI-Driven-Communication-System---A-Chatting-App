@@ -220,31 +220,35 @@ export const handleAIFeature = async (req, res) => {
     const { feature, message: latestMessage, chatId } = req.body;
     const myId = req.user._id;
 
-    const messages = await Message.find({
-      $or: [
-        { senderId: myId, receiverId: chatId },
-        { senderId: chatId, receiverId: myId },
-        { groupId: chatId },
-      ],
-    })
-      .sort({ createdAt: -1 })
-      .limit(30)
-      .populate("senderId", "fullName")
-      .lean();
+    let chatHistory = [];
 
-    const chatHistory = messages
-      .reverse()
-      .map((m) => ({
-        role: m.senderId?._id?.toString() === myId.toString() ? "user" : "assistant",
-        sender: m.senderId?.fullName || "Someone",
-        text: m.text || ""
-      }))
-      .filter(m => m.text);
+    // "chatbot-session" is the AI chatbot page - no real chatId
+    if (chatId && chatId !== "chatbot-session") {
+      const messages = await Message.find({
+        $or: [
+          { senderId: myId, receiverId: chatId },
+          { senderId: chatId, receiverId: myId },
+          { groupId: chatId },
+        ],
+      })
+        .sort({ createdAt: -1 })
+        .limit(20)
+        .populate("senderId", "fullName")
+        .lean();
 
-    // Use the explicitly passed message if provided, else derive from history
-    const messageToAnalyze = latestMessage || 
-      (chatHistory.filter(m => m.role === "assistant").pop()?.text) || 
-      (chatHistory[chatHistory.length - 1]?.text) || 
+      chatHistory = messages
+        .reverse()
+        .map((m) => ({
+          role: m.senderId?._id?.toString() === myId.toString() ? "user" : "assistant",
+          sender: m.senderId?.fullName || "Someone",
+          text: m.text || ""
+        }))
+        .filter(m => m.text);
+    }
+
+    const messageToAnalyze = latestMessage ||
+      (chatHistory.filter(m => m.role === "assistant").pop()?.text) ||
+      (chatHistory[chatHistory.length - 1]?.text) ||
       "";
 
     console.log(`[Controller] AI Feature: "${feature}", Message: "${messageToAnalyze.substring(0, 60)}"`);

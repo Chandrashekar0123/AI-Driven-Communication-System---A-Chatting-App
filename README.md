@@ -11,19 +11,20 @@ A high-performance, professional full-stack communication platform featuring sta
 
 ### 🧠 Multi-Provider AI Engine
 Powered by an intelligent cascade of **Gemini 2.5/2.0**, **HuggingFace**, and **OpenAI GPT-3.5**:
-- **Smart Auto-Replies**: Context-aware, 3-pill reply recommendations generated in real-time.
-- **Voice Messages (STT)**: Built-in Speech-to-Text via Web Speech API and HuggingFace Whisper.
-- **Text-to-Speech (TTS)**: Listen to any message with built-in native TTS.
-- **Magic AI Hub (12 Features)**:
-  - Summarize conversations
-  - Sentiment & Emotion analysis
-  - Extract Action Items / Tasks
-  - Keyphrase Extraction
-  - Translate to English
-  - Tone Rewriting
-  - Grammar Correction
-  - Smart Search & Spam Moderation
-  - Emoji Suggestions
+- **Smart Auto-Replies** ➔ *Gemini 2.5 Flash* (with Smart Local Rule-Engine Fallback)
+- **Voice Messages (STT)** ➔ *HuggingFace Whisper (`openai/whisper-large-v3`)* & *Web Speech API*
+- **Text-to-Speech (TTS)** ➔ *Native Browser Web Speech API*
+- **Magic AI Hub & Chatbot Features**:
+  - **Summarize Conversations** ➔ *Gemini 2.5 Flash*
+  - **Sentiment & Emotion Analysis** ➔ *HuggingFace Inference API* / *Gemini 2.5 Flash*
+  - **Extract Action Items & Tasks** ➔ *Gemini 2.5 Flash*
+  - **Keyphrase Extraction** ➔ *HuggingFace Inference API*
+  - **Language Translation** ➔ *HuggingFace Inference API* / *Gemini 2.5 Flash*
+  - **Tone Rewriting** ➔ *Gemini 2.5 Flash*
+  - **Grammar Correction** ➔ *Gemini 2.5 Flash*
+  - **Smart Search & Spam Moderation** ➔ *Gemini 2.5 Flash*
+  - **Emoji Suggestions** ➔ *Gemini 2.5 Flash* / *Smart Local Rule-Engine*
+  - **Interactive AI Chatbot** ➔ *Gemini 2.5 Flash* / *OpenAI GPT-3.5* (Fallback)
 
 ### 💬 Real-Time Full-Stack Core
 - **Real-Time Engine**: Built with Socket.io for instantaneous message delivery and typing indicators.

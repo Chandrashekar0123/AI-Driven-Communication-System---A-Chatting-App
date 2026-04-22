@@ -2,6 +2,7 @@ import { Home, MessageSquare, Settings, LogOut, Sparkles, Compass, Plus } from "
 import { useAuthStore } from "../../store/useAuthStore";
 import { useChatStore } from "../../store/useChatStore";
 import { Link } from "react-router-dom";
+import toast from "react-hot-toast";
 
 const ServerRail = () => {
   const { authUser, logout } = useAuthStore();
@@ -26,7 +27,7 @@ const ServerRail = () => {
 
       <div className="flex-1 flex flex-col gap-4 overflow-y-auto no-scrollbar py-1 w-full items-center">
         {servers.map((server) => (
-          <div key={server.id} className="relative group cursor-pointer">
+          <div key={server.id} className="relative group cursor-pointer" onClick={() => toast.success("Feature coming in next update!")}>
             <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-0 bg-white rounded-r-full group-hover:h-6 transition-all duration-500" />
             <div className="size-13 rounded-2xl group-hover:rounded-xl transition-all duration-500 flex items-center justify-center shadow-lg bg-white/5 text-slate-400 hover:text-white hover:bg-white/10 border border-white/5">
               <server.icon className="size-6" />
@@ -36,7 +37,14 @@ const ServerRail = () => {
 
         <div className="w-8 h-[1px] bg-white/5 my-1 rounded-full" />
 
-        <div className="relative group cursor-pointer" onClick={() => useChatStore.getState().toggleAIHub()}>
+        <div className="relative group cursor-pointer" onClick={() => {
+          const { selectedChat, toggleAIHub } = useChatStore.getState();
+          if (!selectedChat) {
+             toast.error("Please select a chat first to use the Magic Hub");
+          } else {
+             toggleAIHub();
+          }
+        }}>
           <div className={`absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-0 bg-purple-500 rounded-r-full group-hover:h-10 transition-all duration-500 ${aiResult ? 'h-10 opacity-100' : ''}`} />
           <div className={`size-13 rounded-2xl group-hover:rounded-xl transition-all duration-500 flex items-center justify-center shadow-2xl border border-purple-500/20 ${aiResult ? 'bg-purple-600 text-white scale-110 shadow-purple-500/30' : 'bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white'}`}>
             <Sparkles className="size-6 animate-pulse" />

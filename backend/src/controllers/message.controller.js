@@ -235,36 +235,22 @@ export const handleAIFeature = async (req, res) => {
     const chatHistory = messages
       .reverse()
       .map((m) => ({
-        role: m.senderId._id.toString() === myId.toString() ? "user" : "assistant",
-        sender: m.senderId.fullName || "Someone",
-        text: m.text
-      }));
+        role: m.senderId?._id?.toString() === myId.toString() ? "user" : "assistant",
+        sender: m.senderId?.fullName || "Someone",
+        text: m.text || ""
+      }))
+      .filter(m => m.text);
 
-    console.log(`DEBUG: AI Feature Requested: ${feature} for chatId: ${chatId}`);
-    
-    // Production Hardening: Retry logic for AI Response
-    let attempts = 0;
-    let aiResponse = null;
-    while (attempts < 2) {
-      try {
-        console.log(`DEBUG: AI Attempt ${attempts + 1} starting...`);
-        aiResponse = await getAIResponse(feature, latestMessage, chatHistory);
-        console.log(`DEBUG: AI Response received:`, JSON.stringify(aiResponse).substring(0, 100) + "...");
-        if (aiResponse && aiResponse.result) break;
-      } catch (e) {
-        console.error(`DEBUG: AI Attempt ${attempts + 1} failed:`, e.message);
-      }
-      attempts++;
-    }
+    // Use the explicitly passed message if provided, else derive from history
+    const messageToAnalyze = latestMessage || 
+      (chatHistory.filter(m => m.role === "assistant").pop()?.text) || 
+      (chatHistory[chatHistory.length - 1]?.text) || 
+      "";
 
-     if (!aiResponse) {
-        return res.status(200).json({ 
-          feature, 
-          result: feature === "auto_reply" ? [] : "I'm currently recalibrating. Please try again in a moment.",
-          status: "fallback"
-        });
-     }
+    console.log(`[Controller] AI Feature: "${feature}", Message: "${messageToAnalyze.substring(0, 60)}"`);
 
+    const aiResponse = await getAIResponse(feature, messageToAnalyze, chatHistory);
+    console.log(`[Controller] AI response received for "${feature}"`);
     res.status(200).json(aiResponse);
   } catch (error) {
     console.error("Error in handleAIFeature: ", error.message);

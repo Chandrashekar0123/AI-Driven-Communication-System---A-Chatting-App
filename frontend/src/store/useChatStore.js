@@ -153,11 +153,14 @@ export const useChatStore = create((set, get) => ({
         ...additionalData,
       });
       set({ aiResult: res.data });
-      if (feature === "auto_reply") set({ recommendations: Array.isArray(res.data.result) ? res.data.result : [] });
+      if (feature === "auto_reply") {
+        const replies = Array.isArray(res.data.result) ? res.data.result : [];
+        set({ recommendations: replies.length ? replies : ["Sure!", "Got it!", "Thanks! 👍"] });
+      }
       return res.data;
     } catch (error) {
-      toast.error("AI Assistant is unavailable");
-      if (feature === "auto_reply") set({ recommendations: ["Hey!", "How's it going?", "Good morning!"] });
+      console.error("AI request failed:", error.message);
+      if (feature === "auto_reply") set({ recommendations: ["Sure!", "Got it!", "Thanks! 👍"] });
     } finally {
       set({ isAILoading: false });
     }
@@ -188,6 +191,12 @@ export const useChatStore = create((set, get) => ({
           lastMessages: { ...get().lastMessages, [chatId]: newMessage }
         });
         get().markAsSeen(chatId);
+        
+        // Trigger auto-replies if the message is NOT from the current user
+        if (String(senderId) !== String(useAuthStore.getState().authUser?._id)) {
+          // Pass the latest received message text for accurate suggestions
+          get().runAIFeature("auto_reply", { message: newMessage.text || "" });
+        }
       } else {
         console.log("DEBUG: Message not for current chat. Updating unread counts.");
         set({
@@ -262,7 +271,12 @@ export const useChatStore = create((set, get) => ({
     set({ selectedChat: chat, recommendations: [], aiResult: null });
     if (chat) {
       get().getMessages(chat._id);
-      get().runAIFeature("auto_reply");
+      // Trigger auto-reply based on the last received message in this chat
+      const { messages } = get();
+      const lastReceived = [...(messages || [])]
+        .reverse()
+        .find(m => String(typeof m.senderId === "object" ? m.senderId._id : m.senderId) !== String(useAuthStore.getState().authUser?._id));
+      get().runAIFeature("auto_reply", { message: lastReceived?.text || "" });
     }
   },
 }));

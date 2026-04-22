@@ -12,6 +12,7 @@ const Sidebar = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
   useEffect(() => {
     getUsers();
@@ -25,6 +26,7 @@ const Sidebar = () => {
     if (success) {
       setInviteEmail("");
       setSearchQuery("");
+      setShowInviteModal(false);
     }
   };
 
@@ -63,7 +65,7 @@ const Sidebar = () => {
             <h2 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-500">Private Stream</h2>
             <ChevronDown className="size-3 text-slate-500" />
           </div>
-          <button className="btn btn-ghost btn-xs btn-circle bg-white/5 hover:bg-purple-500 hover:text-white text-slate-400 transition-all shadow-lg">
+          <button onClick={() => setShowInviteModal(true)} className="btn btn-ghost btn-xs btn-circle bg-white/5 hover:bg-purple-500 hover:text-white text-slate-400 transition-all shadow-lg">
             <UserPlus className="size-4" />
           </button>
         </div>
@@ -127,11 +129,45 @@ const Sidebar = () => {
           <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-0.5">Stream Active</div>
         </div>
         <div className="flex gap-1">
-          <button className="p-2 rounded-lg hover:bg-white/10 text-slate-500 hover:text-white transition-all"><Mic size={16} /></button>
-          <button className="p-2 rounded-lg hover:bg-white/10 text-slate-500 hover:text-white transition-all"><Headphones size={16} /></button>
+          <button onClick={() => toast.success("Microphone toggled")} className="p-2 rounded-lg hover:bg-white/10 text-slate-500 hover:text-white transition-all"><Mic size={16} /></button>
+          <button onClick={() => toast.success("Audio toggled")} className="p-2 rounded-lg hover:bg-white/10 text-slate-500 hover:text-white transition-all"><Headphones size={16} /></button>
           <Link to="/settings" className="p-2 rounded-lg hover:bg-white/10 text-slate-500 hover:text-white transition-all"><Settings size={16} /></Link>
         </div>
       </div>
+
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-[#2B2D31] rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl border border-white/10 animate-in zoom-in-95 duration-200">
+            <div className="p-6 space-y-4">
+              <h3 className="text-lg font-black text-white">Add Connection</h3>
+              <p className="text-xs text-slate-400 font-medium">Enter a username or phone number to connect with them.</p>
+              
+              <input
+                type="text"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                placeholder="Username or phone number..."
+                className="w-full bg-[#1E1F22] border border-white/5 rounded-xl py-3 px-4 text-sm text-white placeholder:text-slate-600 focus:ring-2 focus:ring-purple-500/50 transition-all outline-none"
+              />
+
+              <div className="flex gap-3 pt-4">
+                <button 
+                  onClick={() => setShowInviteModal(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-300 font-bold transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => handleAddContact()}
+                  className="flex-1 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-600 text-white font-bold transition-all shadow-[0_0_20px_rgba(168,85,247,0.3)]"
+                >
+                  Add Friend
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 };

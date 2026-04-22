@@ -7,7 +7,7 @@ import AIHubPanel from "../ai/AIHubPanel";
 import MessageSkeleton from "../skeletons/MessageSkeleton";
 import { useAuthStore } from "../../store/useAuthStore";
 import { formatMessageTime } from "../../lib/utils";
-import { Check, CheckCheck, Trash2, Reply, MessageSquare } from "lucide-react";
+import { Check, CheckCheck, Trash2, Reply, MessageSquare, Sparkles } from "lucide-react";
 
 const ChatContainer = () => {
   const {
@@ -51,8 +51,9 @@ const ChatContainer = () => {
         
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 space-y-6 premium-scrollbar bg-chat-pattern">
           {messages.map((message, idx) => {
-            const messageSenderId = typeof message.senderId === "object" ? message.senderId._id : message.senderId;
-            const isMe = messageSenderId === authUser._id;
+            const senderIdData = message.senderId;
+            const messageSenderId = senderIdData && typeof senderIdData === "object" ? senderIdData._id : senderIdData;
+            const isMe = String(messageSenderId) === String(authUser?._id);
             const isRead = message.readBy?.length > 0;
             const showAvatar = idx === 0 || messages[idx-1].senderId !== message.senderId;
 

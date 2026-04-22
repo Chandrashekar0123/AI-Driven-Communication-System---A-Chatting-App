@@ -2,6 +2,9 @@
 
 A high-performance, professional full-stack communication platform featuring state-of-the-art AI integration and a premium "Cinema Mode" dashboard.
 
+<video src="https://github.com/Chandrashekar0123/AI-Driven-Communication-System---A-Chatting-App/raw/main/demo_video.mp4" controls autoplay loop muted style="max-width: 100%;">
+  Your browser does not support the video tag.
+</video>
 ## ✨ Premium Features
 
 ### 🎬 Professional 'Cinema Mode' Layout

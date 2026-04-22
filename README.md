@@ -16,12 +16,12 @@ Powered by an intelligent cascade of **Gemini 2.5/2.0**, **HuggingFace**, and **
 - **Text-to-Speech (TTS)** ➔ *Native Browser Web Speech API*
 - **Magic AI Hub & Chatbot Features**:
   - **Summarize Conversations** ➔ *Gemini 2.5 Flash*
-  - **Sentiment & Emotion Analysis** ➔ *HuggingFace Inference API* / *Gemini 2.5 Flash*
+  - **Sentiment & Emotion Analysis** ➔ *HuggingFace (`cardiffnlp/twitter-roberta-base-sentiment-latest`)* / *Gemini 2.5 Flash*
   - **Extract Action Items & Tasks** ➔ *Gemini 2.5 Flash*
-  - **Keyphrase Extraction** ➔ *HuggingFace Inference API*
-  - **Language Translation** ➔ *HuggingFace Inference API* / *Gemini 2.5 Flash*
+  - **Keyphrase Extraction** ➔ *HuggingFace (`ml6team/keyphrase-extraction-kbir-inspec`)*
+  - **Language Translation** ➔ *HuggingFace (`Helsinki-NLP/opus-mt-mul-en`)* / *Gemini 2.5 Flash*
   - **Tone Rewriting** ➔ *Gemini 2.5 Flash*
-  - **Grammar Correction** ➔ *Gemini 2.5 Flash*
+  - **Grammar Correction** ➔ *HuggingFace (`pszemraj/flan-t5-large-grammar-synthesis`)* / *Gemini 2.5 Flash*
   - **Smart Search & Spam Moderation** ➔ *Gemini 2.5 Flash*
   - **Emoji Suggestions** ➔ *Gemini 2.5 Flash* / *Smart Local Rule-Engine*
   - **Interactive AI Chatbot** ➔ *Gemini 2.5 Flash* / *OpenAI GPT-3.5* (Fallback)

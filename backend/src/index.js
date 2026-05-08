@@ -94,7 +94,16 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-server.listen(PORT, () => {
-  console.log("Server is running on PORT:" + PORT);
+// Export the app for Vercel
+export default app;
+
+// Only listen if not running as a Vercel function
+if (process.env.VERCEL !== "1") {
+  server.listen(PORT, () => {
+    console.log("Server is running on PORT:" + PORT);
+    connectDB();
+  });
+} else {
+  // Connect to DB immediately on Vercel
   connectDB();
-});
+}

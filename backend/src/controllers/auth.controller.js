@@ -5,6 +5,7 @@ import cloudinary from "../lib/cloudinary.js";
 
 export const signup = async (req, res) => {
   const { fullName, emailOrPhone, password } = req.body;
+  console.log("DEBUG: Signup attempt for:", { fullName, emailOrPhone });
   try {
     if (!fullName || !emailOrPhone || !password) {
       return res.status(400).json({ message: "All fields are required" });
@@ -54,7 +55,7 @@ export const signup = async (req, res) => {
       profilePic: newUser.profilePic,
     });
   } catch (error) {
-    console.log("Error in signup controller:", error.message);
+    console.error("CRITICAL: Signup Error Details:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };

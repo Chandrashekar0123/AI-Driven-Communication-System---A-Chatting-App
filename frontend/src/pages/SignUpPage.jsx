@@ -31,6 +31,11 @@ const SignUpPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-[#1E1F22] p-4 font-sans antialiased">
       <div className="w-full max-w-[480px] bg-[#313338] rounded-md p-8 shadow-2xl animate-in fade-in duration-300">
         <div className="text-center space-y-2 mb-8">
+          <div className="flex justify-center mb-4">
+            <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-[0_0_30px_rgba(88,101,242,0.3)] ring-1 ring-white/10 hover:rotate-[-10deg] transition-all duration-300">
+              <img src="/logo.png" alt="Chatty Logo" className="w-full h-full object-cover" />
+            </div>
+          </div>
           <h1 className="text-2xl font-semibold text-white tracking-tight">Create an account</h1>
         </div>
 

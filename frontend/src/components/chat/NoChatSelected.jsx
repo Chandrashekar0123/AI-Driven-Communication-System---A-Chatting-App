@@ -10,8 +10,8 @@ const NoChatSelected = () => {
         {/* Icon Display */}
         <div className="flex justify-center mb-4">
           <div className="relative group">
-            <div className="size-24 rounded-[32px] bg-[#2B2D31] flex items-center justify-center transition-all duration-500 group-hover:rotate-12 shadow-2xl ring-1 ring-white/5">
-              <MessageSquare className="size-12 text-[#5865F2] group-hover:scale-110 transition-transform" />
+            <div className="size-24 rounded-3xl overflow-hidden flex items-center justify-center transition-all duration-500 group-hover:rotate-12 shadow-[0_0_40px_rgba(88,101,242,0.2)] ring-1 ring-white/10">
+              <img src="/logo.png" alt="Chatty Logo" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
             </div>
             <div className="absolute -top-3 -right-3 p-3 rounded-2xl bg-[#5865F2] text-white shadow-xl animate-bounce">
               <Sparkles className="size-5" />

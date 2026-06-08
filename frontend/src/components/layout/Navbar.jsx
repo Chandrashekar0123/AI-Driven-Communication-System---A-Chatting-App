@@ -14,8 +14,8 @@ const Navbar = () => {
           
           <div className="flex items-center gap-8 relative z-10">
             <Link to="/" className="flex items-center gap-4 hover-elevate group">
-              <div className="size-13 rounded-2xl bg-gradient-to-br from-purple-500/20 to-blue-500/10 flex items-center justify-center group-hover:from-purple-500 group-hover:to-blue-600 transition-all duration-700 group-hover:rotate-[15deg] shadow-2xl border border-white/10 group-hover:border-transparent">
-                <MessageSquare className="w-7 h-7 text-purple-400 group-hover:text-white transition-colors" />
+              <div className="w-12 h-12 rounded-xl overflow-hidden shadow-2xl border border-white/10 group-hover:rotate-[10deg] transition-all duration-500">
+                <img src="/logo.png" alt="Chatty Logo" className="w-full h-full object-cover" />
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black tracking-tighter text-white">Chatty</span>

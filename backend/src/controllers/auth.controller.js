@@ -55,8 +55,8 @@ export const signup = async (req, res) => {
       profilePic: newUser.profilePic,
     });
   } catch (error) {
-    console.error("CRITICAL: Signup Error Details:", error);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.error("CRITICAL: Signup Error Details:", error.stack);
+    res.status(500).json({ message: `Internal Server Error: ${error.message}` });
   }
 };
 
@@ -93,8 +93,8 @@ export const login = async (req, res) => {
       profilePic: user.profilePic,
     });
   } catch (error) {
-    console.log("Error in login controller", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    console.log("Error in login controller", error.stack);
+    res.status(500).json({ message: `Internal Server Error: ${error.message}` });
   }
 };
 

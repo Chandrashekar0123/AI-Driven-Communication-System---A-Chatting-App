@@ -15,13 +15,13 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    const isEmail = emailOrPhone.includes("@");
+    const isEmail = String(emailOrPhone).includes("@");
     let userExists;
 
     if (isEmail) {
-      userExists = await User.findOne({ email: emailOrPhone.toLowerCase() });
+      userExists = await User.findOne({ email: String(emailOrPhone).toLowerCase() });
     } else {
-      userExists = await User.findOne({ phoneNumber: emailOrPhone });
+      userExists = await User.findOne({ phoneNumber: String(emailOrPhone) });
     }
 
     if (userExists) {
@@ -37,9 +37,9 @@ export const signup = async (req, res) => {
     };
 
     if (isEmail) {
-      newUserData.email = emailOrPhone.toLowerCase();
+      newUserData.email = String(emailOrPhone).toLowerCase();
     } else {
-      newUserData.phoneNumber = emailOrPhone;
+      newUserData.phoneNumber = String(emailOrPhone);
     }
 
     const newUser = new User(newUserData);
@@ -69,8 +69,8 @@ export const login = async (req, res) => {
 
     const user = await User.findOne({
       $or: [
-        { email: emailOrPhone.toLowerCase() },
-        { phoneNumber: emailOrPhone }
+        { email: String(emailOrPhone).toLowerCase() },
+        { phoneNumber: String(emailOrPhone) }
       ],
     });
 
@@ -145,8 +145,8 @@ export const forgotPassword = async (req, res) => {
   try {
     const user = await User.findOne({
       $or: [
-        { email: emailOrPhone.toLowerCase() },
-        { phoneNumber: emailOrPhone }
+        { email: String(emailOrPhone).toLowerCase() },
+        { phoneNumber: String(emailOrPhone) }
       ],
     });
 
@@ -175,8 +175,8 @@ export const resetPassword = async (req, res) => {
   try {
     const user = await User.findOne({
       $or: [
-        { email: emailOrPhone.toLowerCase() },
-        { phoneNumber: emailOrPhone }
+        { email: String(emailOrPhone).toLowerCase() },
+        { phoneNumber: String(emailOrPhone) }
       ],
     });
 

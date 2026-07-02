@@ -290,7 +290,7 @@ const ChatContainer = () => {
                         {message.text && (
                           <button
                             onClick={() => translateMessage(message._id, message.text)}
-                            className="p-1.5 rounded-lg bg-[#1a1b1e] border border-white/5 text-slate-400 hover:text-indigo-400 hover:border-indigo-500/30 transition-all shadow-lg"
+                            className="p-1.5 rounded-lg bg-[#1a1b1e] border border-white/5 text-slate-400 hover:text-purple-400 hover:border-purple-500/30 transition-all shadow-lg"
                             title="Translate"
                           >
                             <Globe size={13} />
@@ -311,7 +311,7 @@ const ChatContainer = () => {
                         {/* Reply Button */}
                         <button
                           onClick={() => setReplyingTo(message)}
-                          className="p-1.5 rounded-lg bg-[#1a1b1e] border border-white/5 text-slate-400 hover:text-green-400 hover:border-green-500/30 transition-all shadow-lg"
+                          className="p-1.5 rounded-lg bg-[#1a1b1e] border border-white/5 text-slate-400 hover:text-purple-400 hover:border-purple-500/30 transition-all shadow-lg"
                           title="Reply"
                         >
                           <Reply size={13} />
@@ -327,7 +327,7 @@ const ChatContainer = () => {
                             <Smile size={13} />
                           </button>
                           {reactingToMsgId === message._id && (
-                            <div className={`absolute top-8 ${isMe ? "right-0" : "left-0"} z-50`}>
+                            <div className={`absolute bottom-full mb-2 z-[999] ${message.senderId?._id === authUser._id ? "right-0" : "left-0"}`}>
                               <EmojiPicker
                                 theme="dark"
                                 onEmojiClick={(e) => {

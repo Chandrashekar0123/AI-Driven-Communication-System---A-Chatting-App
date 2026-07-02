@@ -65,7 +65,7 @@ const ProfilePage = () => {
             {(selectedCover || authUser.coverPhoto) ? (
               <img src={selectedCover || authUser.coverPhoto} alt="Cover" className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center">
+              <div className="w-full h-full bg-gradient-to-r from-purple-500/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center">
                 <ImageIcon className="size-16 text-white/10" />
               </div>
             )}

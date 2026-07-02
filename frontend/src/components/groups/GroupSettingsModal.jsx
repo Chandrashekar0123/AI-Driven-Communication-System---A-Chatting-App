@@ -10,6 +10,15 @@ const GroupSettingsModal = ({ isOpen, onClose, group }) => {
   const { getGroups, setSelectedChat } = useChatStore();
   const [memberId, setMemberId] = useState("");
   const [loading, setLoading] = useState(false);
+  const [editName, setEditName] = useState(group?.name || "");
+  const [editDescription, setEditDescription] = useState(group?.description || "");
+
+  useEffect(() => {
+    if (group) {
+      setEditName(group.name || "");
+      setEditDescription(group.description || "");
+    }
+  }, [group]);
 
   if (!isOpen || !group) return null;
 
@@ -60,6 +69,35 @@ const GroupSettingsModal = ({ isOpen, onClose, group }) => {
     }
   };
 
+  const handleUpdateGroup = async () => {
+    setLoading(true);
+    try {
+      await axiosInstance.put(`/groups/${group._id}`, { name: editName, description: editDescription });
+      toast.success("Group updated");
+      getGroups();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to update group");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteGroup = async () => {
+    if (!window.confirm("Are you sure you want to delete this group? This cannot be undone.")) return;
+    setLoading(true);
+    try {
+      await axiosInstance.delete(`/groups/${group._id}`);
+      toast.success("Group deleted");
+      getGroups();
+      setSelectedChat(null);
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to delete group");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-[#1e1f22] w-full max-w-md rounded-2xl shadow-2xl border border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-300">
@@ -98,6 +136,33 @@ const GroupSettingsModal = ({ isOpen, onClose, group }) => {
                   Add
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* Edit Group Info (Admins Only) */}
+          {isAdmin && (
+            <div className="flex flex-col gap-3 p-4 rounded-xl bg-white/5 border border-white/10">
+              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Group Info</label>
+              <input 
+                type="text" 
+                value={editName} 
+                onChange={(e) => setEditName(e.target.value)}
+                className="w-full bg-[#111214] border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+                placeholder="Group Name"
+              />
+              <textarea 
+                value={editDescription} 
+                onChange={(e) => setEditDescription(e.target.value)}
+                className="w-full bg-[#111214] border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors resize-none h-20"
+                placeholder="Group Description"
+              />
+              <button 
+                onClick={handleUpdateGroup}
+                disabled={loading || !editName}
+                className="w-full py-2.5 rounded-xl bg-purple-500 text-white font-bold hover:bg-purple-600 transition-colors disabled:opacity-50"
+              >
+                Save Changes
+              </button>
             </div>
           )}
 
@@ -148,6 +213,15 @@ const GroupSettingsModal = ({ isOpen, onClose, group }) => {
             >
               <LogOut size={16} /> Leave Group
             </button>
+            {isAdmin && (
+              <button 
+                onClick={handleDeleteGroup}
+                disabled={loading}
+                className="w-full py-2.5 mt-2 rounded-xl bg-red-600 text-white font-bold hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <X size={16} /> Delete Group
+              </button>
+            )}
           </div>
         </div>
 

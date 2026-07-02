@@ -104,17 +104,7 @@ const AddGroupModal = ({ isOpen, onClose }) => {
             />
           </div>
 
-          {/* Public Toggle */}
-          <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 mt-2">
-            <div>
-              <p className="text-sm font-bold text-white">Public Server</p>
-              <p className="text-xs text-slate-400 mt-0.5">Allow anyone to find and join this server via Explore.</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" className="sr-only peer" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} />
-              <div className="w-11 h-6 bg-black/30 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500 border border-white/10"></div>
-            </label>
-          </div>
+
 
           {/* Footer Actions */}
           <div className="mt-4 pt-4 border-t border-white/5 flex gap-3 justify-end">

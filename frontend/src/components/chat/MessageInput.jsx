@@ -283,13 +283,13 @@ const MessageInput = () => {
 
           {/* Emoji */}
           <button type="button" onClick={() => setShowEmoji(e => !e)}
-            className={`text-slate-500 hover:text-amber-400 transition-all hover:scale-110 shrink-0 ${showEmoji ? "text-amber-400" : ""}`}>
+            className={`text-slate-500 hover:text-purple-400 transition-all hover:scale-110 shrink-0 ${showEmoji ? "text-purple-400" : ""}`}>
             <Smile size={19} />
           </button>
 
           {/* Timer */}
           <button type="button" onClick={() => setShowTimerMenu(e => !e)}
-            className={`text-slate-500 hover:text-green-400 transition-all hover:scale-110 shrink-0 ${expiresIn ? "text-green-400" : ""}`}
+            className={`text-slate-500 hover:text-purple-400 transition-all hover:scale-110 shrink-0 ${expiresIn ? "text-purple-400" : ""}`}
             title="Disappearing Message">
             <Timer size={19} />
           </button>

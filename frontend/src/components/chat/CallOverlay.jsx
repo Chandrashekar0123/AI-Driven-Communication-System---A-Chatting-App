@@ -230,7 +230,7 @@ const CallOverlay = () => {
       <div className="absolute bottom-10 flex items-center gap-6">
         {receivingCall && !callAccepted ? (
           <>
-            <button onClick={answerCall} className="size-16 rounded-full bg-green-500 hover:bg-green-400 flex items-center justify-center shadow-lg transition-all hover:scale-110">
+            <button onClick={answerCall} className="size-16 rounded-full bg-purple-500 hover:bg-purple-400 flex items-center justify-center shadow-lg transition-all hover:scale-110">
               <Phone className="text-white size-8" />
             </button>
             <button onClick={() => endCall(true)} className="size-16 rounded-full bg-red-500 hover:bg-red-400 flex items-center justify-center shadow-lg transition-all hover:scale-110">

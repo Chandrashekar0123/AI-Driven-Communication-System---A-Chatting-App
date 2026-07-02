@@ -8,7 +8,7 @@
   --glass-bg: rgba(255, 255, 255, 0.03);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: blur(24px);
-  --primary-gradient: linear-gradient(135deg, #8b5cf6 0%, #4f46e5 100%);
+  --primary-gradient: linear-gradient(135deg, #8b5cf6 0%, #4752C4 100%);
   --accent-gradient: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
   --surface-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 100%);
 }
@@ -37,7 +37,7 @@
   }
 
   .premium-bubble-sent {
-    @apply bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] text-white shadow-lg shadow-purple-500/20 border border-white/10;
+    @apply bg-gradient-to-br from-[#8b5cf6] to-[#5865F2] text-white shadow-lg shadow-purple-500/20 border border-white/10;
   }
 
   .premium-bubble-received {

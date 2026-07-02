@@ -10,17 +10,17 @@ const AIHubPanel = () => {
 
   const aiTools = [
     // ── Row 1: Core Chat Features ─────────────────────────────────────────
-    { id: "auto_reply",  name: "Auto Replies",  icon: <MessageSquare size={16} />, desc: "3 smart reply suggestions", color: "text-purple-400",  bg: "from-purple-500/20 to-purple-500/5"  },
+    { id: "auto_reply",  name: "Auto Replies",  icon: <MessageSquare size={16} />, desc: "3 smart reply suggestions", color: "text-purple-400",  bg: "from-purple-500/20 to-indigo-500/5"  },
     { id: "summary",     name: "Summarize",     icon: <FileText      size={16} />, desc: "Key topics & action items",  color: "text-blue-400",    bg: "from-blue-500/20 to-blue-500/5"    },
     { id: "chatbot",     name: "AI Chat",       icon: <Bot           size={16} />, desc: "Ask the AI anything",       color: "text-cyan-400",    bg: "from-cyan-500/20 to-cyan-500/5"    },
     // ── Row 2: Analysis ───────────────────────────────────────────────────
-    { id: "sentiment",   name: "Sentiment",     icon: <BarChart2     size={16} />, desc: "Mood & emotion analysis",   color: "text-emerald-400", bg: "from-emerald-500/20 to-emerald-500/5" },
+    { id: "sentiment",   name: "Sentiment",     icon: <BarChart2     size={16} />, desc: "Mood & emotion analysis",   color: "text-purple-400", bg: "from-purple-500/20 to-indigo-500/5" },
     { id: "tasks",       name: "Extract Tasks", icon: <ListTodo      size={16} />, desc: "Find assignments & deadlines",color: "text-lime-400",  bg: "from-lime-500/20 to-lime-500/5"    },
     { id: "keyphrase",   name: "Key Phrases",   icon: <Key           size={16} />, desc: "Extract important topics",  color: "text-yellow-400",  bg: "from-yellow-500/20 to-yellow-500/5" },
     // ── Row 3: Text Tools ─────────────────────────────────────────────────
     { id: "translate",   name: "Translate",     icon: <Globe2        size={16} />, desc: "Convert chat to English",   color: "text-sky-400",     bg: "from-sky-500/20 to-sky-500/5"      },
-    { id: "grammar",     name: "Fix Grammar",   icon: <Pen           size={16} />, desc: "Fix spelling & grammar",    color: "text-indigo-400",  bg: "from-indigo-500/20 to-indigo-500/5" },
-    { id: "tone",        name: "Tone Rewriter", icon: <Ghost         size={16} />, desc: "Rewrite in better tone",    color: "text-amber-400",   bg: "from-amber-500/20 to-amber-500/5"  },
+    { id: "grammar",     name: "Fix Grammar",   icon: <Pen           size={16} />, desc: "Fix spelling & grammar",    color: "text-purple-400",  bg: "from-purple-500/20 to-indigo-500/5" },
+    { id: "tone",        name: "Tone Rewriter", icon: <Ghost         size={16} />, desc: "Rewrite in better tone",    color: "text-purple-400",   bg: "from-purple-500/20 to-indigo-500/5"  },
     // ── Row 4: Smart Features ─────────────────────────────────────────────
     { id: "emoji",       name: "Emoji Suggest", icon: <EmojiIcon     size={16} />, desc: "Best emojis for the mood",  color: "text-pink-400",    bg: "from-pink-500/20 to-pink-500/5"    },
     { id: "search",      name: "Smart Search",  icon: <SearchCode    size={16} />, desc: "AI-powered message search", color: "text-orange-400",  bg: "from-orange-500/20 to-orange-500/5" },
@@ -142,7 +142,7 @@ const AIHubPanel = () => {
         {/* ── Sentiment ─────────────────────────────────────────────────── */}
         {feature === "sentiment" && result && (
           <div className="text-center py-8 space-y-4 bg-white/[0.03] rounded-2xl border border-white/5">
-            <Smile className={`size-16 mx-auto ${result.sentiment === "Positive" ? "text-emerald-400" : result.sentiment === "Negative" ? "text-rose-400" : "text-amber-400"}`} />
+            <Smile className={`size-16 mx-auto ${result.sentiment === "Positive" ? "text-purple-400" : result.sentiment === "Negative" ? "text-rose-400" : "text-purple-400"}`} />
             <div>
               <h4 className="text-2xl font-black text-white uppercase tracking-tighter">{result.sentiment}</h4>
               <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em] mt-1">{result.emotion}</p>
@@ -150,7 +150,7 @@ const AIHubPanel = () => {
                 <div className="mt-3 mx-auto w-32">
                   <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full ${result.sentiment === "Positive" ? "bg-emerald-400" : result.sentiment === "Negative" ? "bg-rose-400" : "bg-amber-400"}`}
+                      className={`h-full rounded-full ${result.sentiment === "Positive" ? "bg-purple-400" : result.sentiment === "Negative" ? "bg-rose-400" : "bg-purple-400"}`}
                       style={{ width: `${Math.round(result.score * 100)}%` }}
                     />
                   </div>
@@ -166,8 +166,8 @@ const AIHubPanel = () => {
           <div className="space-y-3">
             <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Extracted Tasks</h5>
             {result.map((t, i) => (
-              <div key={i} className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20 space-y-2">
-                <div className="text-xs font-black text-emerald-400">{t.task}</div>
+              <div key={i} className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/20 space-y-2">
+                <div className="text-xs font-black text-purple-400">{t.task}</div>
                 <div className="flex justify-between items-center text-[9px] font-bold text-slate-500 uppercase tracking-widest pt-2 border-t border-white/5">
                   <span className="flex items-center gap-1"><User size={9} /> {t.person || "Unassigned"}</span>
                   <span className="flex items-center gap-1"><Calendar size={9} /> {t.deadline || "No deadline"}</span>
@@ -213,8 +213,8 @@ const AIHubPanel = () => {
 
         {/* ── Moderation ────────────────────────────────────────────────── */}
         {feature === "moderate" && result && (
-          <div className={`p-6 rounded-2xl text-center space-y-4 ${result.flagged ? "bg-rose-500/10 border border-rose-500/20" : "bg-emerald-500/10 border border-emerald-500/20"}`}>
-            <ShieldCheck className={`size-14 mx-auto ${result.flagged ? "text-rose-500" : "text-emerald-400"}`} />
+          <div className={`p-6 rounded-2xl text-center space-y-4 ${result.flagged ? "bg-rose-500/10 border border-rose-500/20" : "bg-purple-500/10 border border-purple-500/20"}`}>
+            <ShieldCheck className={`size-14 mx-auto ${result.flagged ? "text-rose-500" : "text-purple-400"}`} />
             <div>
               <h4 className="font-black text-white uppercase tracking-widest">{result.flagged ? "Risk Detected" : "Safety Verified"}</h4>
               <p className="text-[11px] text-slate-400 font-bold leading-relaxed mt-2">{result.reason || "Stream integrity verified."}</p>
@@ -234,11 +234,13 @@ const AIHubPanel = () => {
           </div>
         )}
 
-        {/* ── Chatbot / Translate / Tone / Grammar (single string result) ── */}
-        {(feature === "chatbot" || feature === "translate" || feature === "tone" || feature === "grammar") && typeof result === "string" && (
+        {/* ── Chatbot / Translate / Tone / Grammar ── */}
+        {(feature === "chatbot" || feature === "translate" || feature === "tone" || feature === "grammar") && (
           <div className="p-6 rounded-2xl bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-purple-500/20 space-y-4">
             <Brain className="size-5 text-purple-500" />
-            <p className="text-sm font-semibold text-white leading-relaxed">{result}</p>
+            <div className="text-sm font-semibold text-white leading-relaxed">
+              {typeof result === "string" ? result : (result?.message || result?.text || result?.summary || JSON.stringify(result))}
+            </div>
             {(feature === "tone" || feature === "grammar") && (
               <button
                 onClick={() => useChatStore.getState().sendMessage({ text: result })}

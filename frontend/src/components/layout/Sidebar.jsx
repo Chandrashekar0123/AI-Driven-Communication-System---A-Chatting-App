@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { useChatStore } from "../../store/useChatStore";
 import { useAuthStore } from "../../store/useAuthStore";
 import SidebarSkeleton from "../skeletons/SidebarSkeleton";
-import StatusRail from "./StatusRail";
-import { Settings, Mic, Headphones, Search, ChevronDown, UserPlus } from "lucide-react";
+import AddGroupModal from "../groups/AddGroupModal";
+
+import { Settings, Mic, Headphones, Search, ChevronDown, UserPlus, Users, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -14,6 +15,7 @@ const Sidebar = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [inviteEmail, setInviteEmail] = useState("");
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [isAddGroupModalOpen, setIsAddGroupModalOpen] = useState(false);
 
   useEffect(() => {
     getUsers();
@@ -59,17 +61,22 @@ const Sidebar = () => {
   if (isUsersLoading && users.length === 0) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-72 lg:w-80 flex flex-col bg-white/[0.01] backdrop-blur-2xl border-r border-white/5 transition-all duration-300 relative z-30 shadow-2xl overflow-hidden">
-      <StatusRail />
+    <aside className="h-full w-full sm:w-72 lg:w-80 flex flex-col bg-white/[0.01] backdrop-blur-2xl border-r border-white/5 transition-all duration-300 relative z-30 shadow-2xl overflow-hidden">
+
       <div className="p-6 border-b border-white/5 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h2 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-500">Private Stream</h2>
             <ChevronDown className="size-3 text-slate-500" />
           </div>
-          <button onClick={() => setShowInviteModal(true)} className="btn btn-ghost btn-xs btn-circle bg-white/5 hover:bg-purple-500 hover:text-white text-slate-400 transition-all shadow-lg">
-            <UserPlus className="size-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setIsAddGroupModalOpen(true)} className="btn btn-ghost btn-xs btn-circle bg-white/5 hover:bg-purple-500 hover:text-white text-slate-400 transition-all shadow-lg" title="Create Group">
+              <Plus className="size-4" />
+            </button>
+            <button onClick={() => setShowInviteModal(true)} className="btn btn-ghost btn-xs btn-circle bg-white/5 hover:bg-purple-500 hover:text-white text-slate-400 transition-all shadow-lg" title="Add Contact">
+              <UserPlus className="size-4" />
+            </button>
+          </div>
         </div>
         
         <form onSubmit={handleGlobalSearch} className="relative group">
@@ -88,7 +95,7 @@ const Sidebar = () => {
 
         <div className="flex gap-1.5 p-1 bg-black/20 rounded-xl">
           {['all', 'groups', 'online'].map((tab) => (
-            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${activeTab === tab ? "bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white shadow-lg" : "text-slate-500 hover:text-slate-300 hover:bg-white/5"}`}>
+            <button key={tab} onClick={() => setActiveTab(tab)} className={`flex-1 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 ${activeTab === tab ? "bg-gradient-to-r from-[#8b5cf6] to-[#5865F2] text-white shadow-lg" : "text-slate-500 hover:text-slate-300 hover:bg-white/5"}`}>
               {tab}
             </button>
           ))}
@@ -170,6 +177,7 @@ const Sidebar = () => {
           </div>
         </div>
       )}
+      <AddGroupModal isOpen={isAddGroupModalOpen} onClose={() => setIsAddGroupModalOpen(false)} />
     </aside>
   );
 };

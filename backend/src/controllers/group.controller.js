@@ -170,3 +170,50 @@ export const removeMember = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const updateGroup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, avatar, isPublic } = req.body;
+    const reqUserId = req.user._id;
+
+    const group = await Group.findById(id);
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    if (!group.admins.includes(reqUserId)) {
+      return res.status(403).json({ error: "Only admins can update group settings" });
+    }
+
+    if (name) group.name = name;
+    if (description !== undefined) group.description = description;
+    if (avatar !== undefined) group.avatar = avatar;
+    if (isPublic !== undefined) group.isPublic = isPublic;
+
+    await group.save();
+    const updatedGroup = await Group.findById(group._id).populate("members", "fullName profilePic");
+    res.status(200).json(updatedGroup);
+  } catch (error) {
+    console.error("Error in updateGroup:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const deleteGroup = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reqUserId = req.user._id;
+
+    const group = await Group.findById(id);
+    if (!group) return res.status(404).json({ error: "Group not found" });
+
+    if (!group.admins.includes(reqUserId)) {
+      return res.status(403).json({ error: "Only admins can delete the group" });
+    }
+
+    await Group.findByIdAndDelete(id);
+    res.status(200).json({ success: true, message: "Group deleted successfully" });
+  } catch (error) {
+    console.error("Error in deleteGroup:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

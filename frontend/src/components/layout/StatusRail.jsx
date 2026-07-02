@@ -78,7 +78,7 @@ const StatusRail = () => {
         
         return (
           <div key={user._id} className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group" onClick={() => setIsViewing(userStatuses)}>
-            <div className={`size-14 rounded-full p-[2px] ${isAllViewed ? 'bg-slate-600' : 'bg-gradient-to-tr from-purple-500 to-emerald-500'} transition-all group-hover:scale-105`}>
+            <div className={`size-14 rounded-full p-[2px] ${isAllViewed ? 'bg-slate-600' : 'bg-gradient-to-tr from-purple-500 to-indigo-500'} transition-all group-hover:scale-105`}>
               <div className="w-full h-full bg-[#1e1f22] rounded-full overflow-hidden border-2 border-[#111214]">
                 <img src={user.profilePic || "/avatar.png"} alt={user.fullName} className="w-full h-full object-cover" />
               </div>
@@ -158,7 +158,7 @@ const StatusRail = () => {
             {isViewing[0].type === "image" ? (
               <img src={isViewing[0].content} className="w-full h-full object-cover" alt="Status" />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center p-8 text-center text-white text-2xl font-bold font-serif leading-relaxed">
+              <div className="w-full h-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center p-8 text-center text-white text-2xl font-bold font-serif leading-relaxed">
                 {isViewing[0].content}
               </div>
             )}

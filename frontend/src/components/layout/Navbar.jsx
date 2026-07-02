@@ -58,7 +58,7 @@ const Navbar = () => {
             {!authUser && (
               <Link
                 to="/login"
-                className="btn bg-gradient-to-r from-[#8b5cf6] to-[#4f46e5] border-none text-white btn-sm rounded-2xl h-12 px-10 shadow-2xl shadow-purple-500/30 font-black text-xs uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all"
+                className="btn bg-gradient-to-r from-[#8b5cf6] to-[#4752C4] border-none text-white btn-sm rounded-2xl h-12 px-10 shadow-2xl shadow-purple-500/30 font-black text-xs uppercase tracking-[0.2em] hover:scale-105 active:scale-95 transition-all"
               >
                 Access Hub
               </Link>

@@ -3,14 +3,13 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { useChatStore } from "../../store/useChatStore";
 import { useState } from "react";
 import GroupSettingsModal from "../groups/GroupSettingsModal";
-import ActionItemsModal from "./ActionItemsModal";
+
 import SearchMessagesModal from "./SearchMessagesModal";
 
 const ChatHeader = () => {
   const { selectedChat, setSelectedChat, runAIFeature, isAILoading, typingUsers, isAIHubOpen } = useChatStore();
   const { onlineUsers } = useAuthStore();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [showActionItems, setShowActionItems] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
   if (!selectedChat) return null;
@@ -62,13 +61,7 @@ const ChatHeader = () => {
       </div>
 
       <div className="flex items-center gap-2">
-        <button 
-          onClick={() => setShowActionItems(true)}
-          className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-green-400 hover:bg-green-500/10 transition-all"
-          title="Action Items"
-        >
-          <CheckSquare size={18} />
-        </button>
+
         <button 
           onClick={() => setShowSearch(true)}
           className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-white hover:bg-white/5 transition-all"
@@ -88,7 +81,7 @@ const ChatHeader = () => {
           <button 
             className={`btn btn-sm px-5 gap-2 rounded-xl border-none shadow-2xl transition-all duration-500 ${
               isAIHubOpen 
-                ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white shadow-purple-500/30' 
+                ? 'bg-gradient-to-r from-[#8b5cf6] to-[#5865F2] text-white shadow-purple-500/30' 
                 : isAILoading 
                   ? 'bg-white/5 text-purple-400 animate-pulse' 
                   : 'bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white'
@@ -124,10 +117,7 @@ const ChatHeader = () => {
           group={selectedChat} 
         />
       )}
-      <ActionItemsModal 
-        isOpen={showActionItems} 
-        onClose={() => setShowActionItems(false)} 
-      />
+
       <SearchMessagesModal 
         isOpen={showSearch} 
         onClose={() => setShowSearch(false)} 

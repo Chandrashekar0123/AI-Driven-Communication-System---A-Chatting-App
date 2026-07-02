@@ -13,7 +13,7 @@ const SettingsPage = () => {
         <div className="space-y-2 text-center lg:text-left">
           <div className="flex flex-col lg:flex-row lg:items-end gap-3 justify-center lg:justify-start">
              <h2 className="text-4xl font-black text-white tracking-tighter">Settings</h2>
-             <span className="text-xs font-black uppercase tracking-[0.3em] text-[#8b5cf6] pb-1">Neural Config</span>
+             <span className="text-xs font-black uppercase tracking-[0.3em] text-[#5865F2] pb-1">Neural Config</span>
           </div>
           <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Manage your application preferences and AI features</p>
         </div>
@@ -92,7 +92,7 @@ const SettingsPage = () => {
           <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/5 shadow-2xl space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400"><Bell size={20} /></div>
+                  <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400"><Bell size={20} /></div>
                   <h3 className="font-black text-sm uppercase tracking-widest text-white">Notifications</h3>
                 </div>
                 <div className="space-y-4">
@@ -109,7 +109,7 @@ const SettingsPage = () => {
 
             <div className="bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/5 shadow-2xl space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-amber-500/20 text-amber-400"><Globe size={20} /></div>
+                  <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400"><Globe size={20} /></div>
                   <h3 className="font-black text-sm uppercase tracking-widest text-white">Language & Region</h3>
                 </div>
                 <div className="space-y-4">

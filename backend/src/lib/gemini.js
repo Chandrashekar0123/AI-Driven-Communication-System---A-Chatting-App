@@ -62,6 +62,7 @@ Rules:
 - For sentiment: analyze the overall mood of the LATEST MESSAGE.
 - For tasks: extract any action items, owners, and deadlines mentioned.
 - For translate: convert non-English text to English.
+- For chatbot: provide a concise, helpful response or explanation for the LATEST MESSAGE.
 - For tone: rewrite the message in a friendly, professional tone.
 - For grammar: fix spelling and grammar mistakes.
 - For emoji: suggest 3 relevant emojis for the message.
@@ -70,33 +71,42 @@ Rules:
 OUTPUT:`;
 };
 
-// ─── Gemini Call ─────────────────────────────────────────────────────────────
-async function callGemini(feature, message, history) {
-  if (!genAI) throw new Error("Gemini not configured");
+// ─── Generic HuggingFace LLM Call ──────────────────────────────────────────────
+async function callHuggingFaceLLM(feature, message, history) {
+  if (!HF_KEY) throw new Error("HuggingFace API key not configured");
   const prompt = buildPrompt(feature, message, history);
-
-  for (const modelName of GEMINI_MODELS) {
+  
+  // Use a reliable free Instruct model
+  const model = "mistralai/Mistral-7B-Instruct-v0.3";
+  
+  console.log(`[AI] Trying HuggingFace LLM model: ${model} for "${feature}"`);
+  
+  const res = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+    method: "POST",
+    headers: { "Authorization": `Bearer ${HF_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      inputs: `[INST] ${prompt} [/INST]`,
+      parameters: { max_new_tokens: 500, temperature: 0.1, return_full_text: false }
+    })
+  });
+  
+  if (!res.ok) throw new Error(`HuggingFace LLM returned status: ${res.status}`);
+  
+  const data = await res.json();
+  let text = (data[0]?.generated_text || "").trim();
+  
+  // Try to parse the JSON block
+  const s = text.indexOf("{"), e = text.lastIndexOf("}");
+  if (s !== -1 && e !== -1) {
     try {
-      console.log(`[AI] Trying Gemini model: ${modelName}`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(prompt);
-      let text = result.response.text().trim()
-        .replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      const s = text.indexOf("{"), e = text.lastIndexOf("}");
-      if (s !== -1 && e !== -1) {
-        const parsed = JSON.parse(text.substring(s, e + 1));
-        console.log(`[AI] ✅ Gemini (${modelName}) succeeded for "${feature}"`);
-        return parsed;
-      }
-      throw new Error("Invalid JSON format from Gemini");
-    } catch (err) {
-      const isRateLimit = err.message.includes("429") || err.message.includes("quota");
-      const isNotFound  = err.message.includes("404") || err.message.includes("not found");
-      console.warn(`[AI] Gemini ${modelName} failed: ${isRateLimit ? "RATE LIMIT" : isNotFound ? "NOT FOUND" : err.message.substring(0, 80)}`);
-      if (!isRateLimit && !isNotFound) throw err; // Unexpected error, don't try next model
+      const parsed = JSON.parse(text.substring(s, e + 1));
+      console.log(`[AI] ✅ HuggingFace LLM succeeded for "${feature}"`);
+      return parsed;
+    } catch (parseErr) {
+      // JSON parse failed
     }
   }
-  throw new Error("All Gemini models exhausted");
+  throw new Error("Invalid JSON format from HuggingFace LLM");
 }
 
 // ─── HuggingFace Call ─────────────────────────────────────────────────────────
@@ -349,12 +359,12 @@ export const getAIResponse = async (feature, message, history = []) => {
     }
   }
 
-  // 3. Try Gemini if we don't have a result yet
-  if (!result && GEMINI_KEY) {
+  // 3. Try HuggingFace LLM (Replacing Gemini)
+  if (!result && HF_KEY) {
     try {
-      result = await callGemini(feature, message, history);
-    } catch (gErr) {
-      console.warn(`[AI] Gemini cascade failed: ${gErr.message.substring(0, 80)}`);
+      result = await callHuggingFaceLLM(feature, message, history);
+    } catch (llmErr) {
+      console.warn(`[AI] HuggingFace LLM cascade failed: ${llmErr.message.substring(0, 80)}`);
     }
   }
 

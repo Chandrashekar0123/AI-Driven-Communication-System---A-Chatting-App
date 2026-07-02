@@ -11,6 +11,7 @@ import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
 import groupRoutes from "./routes/group.route.js";
+import statusRoutes from "./routes/status.route.js";
 import { app, server } from "./lib/socket.js";
 import passport from "./lib/passport.js";
 
@@ -66,6 +67,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);
+app.use("/api/status", statusRoutes);
 
 // Centralized Error Handling Middleware
 app.use((err, req, res, next) => {

@@ -28,9 +28,21 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    coverPhoto: {
+      type: String,
+      default: "",
+    },
     status: {
       type: String,
-      default: "Hey there! I am using AI Chat.",
+      default: "Hey there! I am using Chatty.",
+    },
+    bio: {
+      type: String,
+      default: "",
+    },
+    isBot: {
+      type: Boolean,
+      default: false,
     },
     contacts: [
       {
@@ -41,6 +53,10 @@ const userSchema = new mongoose.Schema(
     settings: {
       theme: { type: String, default: "dark" },
       notifications: { type: Boolean, default: true },
+    },
+    lastSeen: {
+      type: Date,
+      default: null,
     },
     otp: {
       type: String,

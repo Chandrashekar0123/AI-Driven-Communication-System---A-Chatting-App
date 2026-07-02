@@ -41,6 +41,7 @@ const buildPrompt = (feature, message, history) => {
     keyphrase:  `{"feature":"keyphrase","result":["project deadline","budget report","team meeting"]}`,
     grammar:    `{"feature":"grammar","result":"Here is the grammatically corrected message."}`,
     emoji:      `{"feature":"emoji","result":["😊","👍","🎉"]}`,
+    urgency:    `{"feature":"urgency","result":{"isUrgent":true,"reason":"User needs immediate help with a production issue."}}`,
   };
 
   return `You are an AI assistant inside a chat app. Respond ONLY in valid JSON. No markdown fences.
@@ -65,6 +66,7 @@ Rules:
 - For grammar: fix spelling and grammar mistakes.
 - For emoji: suggest 3 relevant emojis for the message.
 - For keyphrase: extract 3-5 important topics.
+- For urgency: determine if the message is highly urgent (requires immediate attention) or not.
 OUTPUT:`;
 };
 
@@ -277,6 +279,14 @@ function staticFallback(feature, message) {
     if (posScore > negScore) return { feature, result: { sentiment: "Positive", emotion: "Happy", score: 0.75 } };
     if (negScore > posScore) return { feature, result: { sentiment: "Negative", emotion: "Upset", score: 0.75 } };
     return { feature, result: { sentiment: "Neutral", emotion: "Calm", score: 0.5 } };
+  }
+
+  // Detect urgency locally
+  if (feature === "urgency") {
+    const msg = (message || "").toLowerCase();
+    const urgentWords = ["urgent", "asap", "emergency", "immediately", "help", "critical", "broken", "down", "fast", "quick"];
+    const isUrgent = urgentWords.some(w => msg.includes(w));
+    return { feature, result: { isUrgent, reason: isUrgent ? "Contains urgent keywords" : "No urgent keywords found" } };
   }
 
   const fallbacks = {

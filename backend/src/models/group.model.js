@@ -9,16 +9,11 @@ const groupSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      trim: true,
-    },
-    profilePic: {
-      type: String,
       default: "",
     },
-    admin: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+    avatar: {
+      type: String,
+      default: "",
     },
     members: [
       {
@@ -26,9 +21,15 @@ const groupSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    lastMessage: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Message",
+    admins: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    isPublic: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

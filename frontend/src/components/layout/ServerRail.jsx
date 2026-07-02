@@ -3,11 +3,17 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { useChatStore } from "../../store/useChatStore";
 import { Link, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
+import { useState } from "react";
+import AddGroupModal from "../groups/AddGroupModal";
+import ExploreGroupsModal from "../groups/ExploreGroupsModal";
 
 const ServerRail = () => {
   const { authUser, logout } = useAuthStore();
-  const { setSelectedChat, selectedChat, aiResult } = useChatStore();
+  const { setSelectedChat, selectedChat, aiResult, groups } = useChatStore();
   const location = useLocation();
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isExploreModalOpen, setIsExploreModalOpen] = useState(false);
 
   const isAIChatActive = location.pathname === "/ai-chat";
 
@@ -27,15 +33,47 @@ const ServerRail = () => {
         </div>
       </div>
 
+      {/* Dynamic User Groups */}
+      <div className="flex flex-col gap-3 items-center w-full my-2">
+        {groups.map(group => (
+          <div 
+            key={group._id} 
+            onClick={() => setSelectedChat(group)}
+            className="relative group cursor-pointer w-full flex justify-center"
+          >
+            <div className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 rounded-r-full bg-white transition-all duration-300 ${selectedChat?._id === group._id ? "h-8 opacity-100" : "h-0 opacity-0 group-hover:h-5 group-hover:opacity-100"}`} />
+            <div className={`size-12 rounded-2xl group-hover:rounded-xl overflow-hidden transition-all duration-300 flex items-center justify-center shadow-lg ${selectedChat?._id === group._id ? "ring-2 ring-white" : "bg-white/[0.06] text-slate-400 group-hover:bg-indigo-500 group-hover:text-white"}`}>
+              {group.profilePic ? (
+                <img src={group.profilePic} alt={group.name} className="w-full h-full object-cover" />
+              ) : (
+                <span className="font-bold text-lg">{group.name.charAt(0).toUpperCase()}</span>
+              )}
+            </div>
+            <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-[#111214] text-white text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-xl border border-white/10 z-50">
+              {group.name}
+            </div>
+          </div>
+        ))}
+      </div>
       <div className="w-8 h-[1px] bg-white/[0.06] my-2 rounded-full" />
 
       {/* Static placeholder buttons */}
       <div className="flex flex-col gap-3 items-center">
         {staticButtons.map((btn) => (
-          <div key={btn.id} className="relative group cursor-pointer" onClick={() => toast("Coming soon!", { icon: "🚧" })}>
+          <div 
+            key={btn.id} 
+            className="relative group cursor-pointer" 
+            onClick={() => {
+              if (btn.id === "explore") setIsExploreModalOpen(true);
+              else if (btn.id === "add") setIsAddModalOpen(true);
+            }}
+          >
             <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1 h-0 bg-white rounded-r-full group-hover:h-5 transition-all duration-300 opacity-0 group-hover:opacity-100" />
-            <div className="size-12 rounded-2xl group-hover:rounded-xl transition-all duration-300 flex items-center justify-center bg-white/[0.06] text-slate-400 hover:text-white hover:bg-white/10">
+            <div className="size-12 rounded-2xl group-hover:rounded-xl transition-all duration-300 flex items-center justify-center bg-white/[0.06] text-green-500 hover:text-white hover:bg-green-500">
               <btn.icon className="size-5" />
+            </div>
+            <div className="absolute left-16 top-1/2 -translate-y-1/2 bg-[#111214] text-white text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-xl border border-white/10 z-50">
+              {btn.label} Server
             </div>
           </div>
         ))}
@@ -91,7 +129,7 @@ const ServerRail = () => {
         </Link>
 
         <div onClick={logout} className="relative group cursor-pointer">
-          <div className="size-11 rounded-2xl group-hover:rounded-xl bg-white/[0.06] text-rose-400 hover:text-white hover:bg-rose-500 flex items-center justify-center transition-all duration-300 shadow-lg">
+          <div className="size-11 rounded-2xl group-hover:rounded-xl bg-white/[0.06] text-rose-400 hover:text-white hover:bg-rose-50 flex items-center justify-center transition-all duration-300 shadow-lg">
             <LogOut className="size-5" />
           </div>
           <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-[#111214] text-white text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-xl border border-white/10 z-50">
@@ -99,6 +137,8 @@ const ServerRail = () => {
           </div>
         </div>
       </div>
+      <AddGroupModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} />
+      <ExploreGroupsModal isOpen={isExploreModalOpen} onClose={() => setIsExploreModalOpen(false)} />
     </nav>
   );
 };

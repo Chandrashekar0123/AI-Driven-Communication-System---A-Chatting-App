@@ -1,16 +1,28 @@
-import { Sparkles, X, User, Users, MoreVertical, Phone, Video, Search } from "lucide-react";
+import { Sparkles, X, User, Users, MoreVertical, Phone, Video, Search, CheckSquare } from "lucide-react";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useChatStore } from "../../store/useChatStore";
+import { useState } from "react";
+import GroupSettingsModal from "../groups/GroupSettingsModal";
+import ActionItemsModal from "./ActionItemsModal";
+import SearchMessagesModal from "./SearchMessagesModal";
 
 const ChatHeader = () => {
   const { selectedChat, setSelectedChat, runAIFeature, isAILoading, typingUsers, isAIHubOpen } = useChatStore();
   const { onlineUsers } = useAuthStore();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [showActionItems, setShowActionItems] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
 
   if (!selectedChat) return null;
 
   const isGroup = !!selectedChat.members;
   const isOnline = !isGroup && onlineUsers.includes(selectedChat._id);
   const typing = typingUsers[selectedChat._id]?.length > 0;
+
+  const handleStartCall = () => {
+    if (isGroup) return; // Currently only 1-on-1 supported
+    window.dispatchEvent(new Event("start-call"));
+  };
 
   return (
     <div className="h-16 px-6 flex items-center justify-between bg-white/[0.02] backdrop-blur-3xl border-b border-white/5 shadow-2xl relative z-20">
@@ -32,20 +44,43 @@ const ChatHeader = () => {
             {isGroup && <Users className="size-4 text-slate-500" />}
           </h3>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] mt-0.5">
-            {typing ? (
-              <span className="text-purple-400 animate-pulse">AI Analysis Typing...</span>
+            {isAILoading ? (
+              <span className="text-purple-400 animate-pulse flex items-center gap-1">
+                <Sparkles size={10} /> AI is thinking...
+              </span>
+            ) : typing ? (
+              <span className="text-purple-400 animate-pulse">Typing...</span>
             ) : isOnline ? (
-              <span className="text-[#23A559] opacity-80">Connected</span>
+              <span className="text-[#23A559] opacity-80">Online</span>
             ) : (
-              <span className="text-slate-500">Signal Lost</span>
+              <span className="text-slate-500">
+                {selectedChat.lastSeen ? `Last seen: ${new Date(selectedChat.lastSeen).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : "Offline"}
+              </span>
             )}
           </p>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <button className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-white hover:bg-white/5 transition-all"><Phone size={18} /></button>
-        <button className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-white hover:bg-white/5 transition-all"><Video size={18} /></button>
+        <button 
+          onClick={() => setShowActionItems(true)}
+          className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-green-400 hover:bg-green-500/10 transition-all"
+          title="Action Items"
+        >
+          <CheckSquare size={18} />
+        </button>
+        <button 
+          onClick={() => setShowSearch(true)}
+          className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+          title="Search Messages"
+        >
+          <Search size={18} />
+        </button>
+        {!isGroup && (
+          <button onClick={handleStartCall} className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+            <Video size={18} />
+          </button>
+        )}
         
         <div className="w-[1px] h-6 bg-white/5 mx-2" />
         
@@ -66,7 +101,14 @@ const ChatHeader = () => {
           </button>
         </div>
 
-        <button className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-white hover:bg-white/5 ml-1 transition-all"><MoreVertical size={18} /></button>
+        {isGroup && (
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-white hover:bg-white/5 ml-1 transition-all"
+          >
+            <MoreVertical size={18} />
+          </button>
+        )}
         <button 
           onClick={() => setSelectedChat(null)}
           className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-red-500 hover:bg-red-500/10 ml-1 transition-all"
@@ -74,6 +116,22 @@ const ChatHeader = () => {
           <X size={20} />
         </button>
       </div>
+      
+      {isGroup && (
+        <GroupSettingsModal 
+          isOpen={isSettingsOpen} 
+          onClose={() => setIsSettingsOpen(false)} 
+          group={selectedChat} 
+        />
+      )}
+      <ActionItemsModal 
+        isOpen={showActionItems} 
+        onClose={() => setShowActionItems(false)} 
+      />
+      <SearchMessagesModal 
+        isOpen={showSearch} 
+        onClose={() => setShowSearch(false)} 
+      />
     </div>
   );
 };

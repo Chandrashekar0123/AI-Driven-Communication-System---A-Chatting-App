@@ -14,6 +14,7 @@ const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const AIChatbotPage = lazy(() => import("./pages/AIChatbotPage"));
+import CallOverlay from "./components/chat/CallOverlay";
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth, socket } = useAuthStore();
@@ -55,6 +56,8 @@ const App = () => {
           <Route path="/ai-chat" element={authUser ? <AIChatbotPage /> : <Navigate to="/login" />} />
         </Routes>
       </Suspense>
+
+      {authUser && <CallOverlay />}
 
       <Toaster 
         position="bottom-right"

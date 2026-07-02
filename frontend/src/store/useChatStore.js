@@ -11,14 +11,25 @@ export const useChatStore = create((set, get) => ({
   isUsersLoading: false,
   isGroupsLoading: false,
   isMessagesLoading: false,
+  publicGroups: [],
+  isPublicGroupsLoading: false,
   recommendations: [],
   isRecommendationsLoading: false,
   aiResult: null,
+  replyingTo: null,
   isAILoading: false,
   isAIHubOpen: false,
   typingUsers: {}, // { chatId: [userIds] }
   unreadCounts: {}, // { chatId: count }
   lastMessages: {}, // { chatId: messageObject }
+  pinnedSummary: null,
+  isSummaryLoading: false,
+  actionItems: [],
+  isActionItemsLoading: false,
+  searchResults: [],
+  isSearchLoading: false,
+  translations: {}, // { messageId: "Translated text" }
+  isTranslating: {}, // { messageId: true }
 
   toggleAIHub: () => set({ isAIHubOpen: !get().isAIHubOpen }),
 
@@ -70,18 +81,119 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
+  createGroup: async (groupData) => {
+    try {
+      const res = await axiosInstance.post("/groups/create", groupData);
+      set({ groups: [...get().groups, res.data] });
+      toast.success("Group created successfully!");
+      return res.data;
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to create group");
+      return null;
+    }
+  },
+
+  getPublicGroups: async () => {
+    set({ isPublicGroupsLoading: true });
+    try {
+      const res = await axiosInstance.get("/groups/public");
+      set({ publicGroups: res.data });
+    } catch (error) {
+      toast.error("Failed to load public groups");
+    } finally {
+      set({ isPublicGroupsLoading: false });
+    }
+  },
+
+  joinGroup: async (groupId) => {
+    try {
+      const res = await axiosInstance.post(`/groups/join/${groupId}`);
+      set({ 
+        groups: [...get().groups, res.data],
+        publicGroups: get().publicGroups.filter(g => g._id !== groupId)
+      });
+      toast.success("Successfully joined the group!");
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to join group");
+      return false;
+    }
+  },
+
   getMessages: async (chatId) => {
     set({ isMessagesLoading: true });
     try {
       const res = await axiosInstance.get(`/messages/${chatId}`);
       set({ messages: res.data });
       get().markAsSeen(chatId);
+      // Fetch the pinned summary when chat loads
+      get().getPinnedSummary(chatId);
     } catch (error) {
       toast.error("Failed to load messages");
     } finally {
       set({ isMessagesLoading: false });
     }
   },
+
+  getPinnedSummary: async (chatId, refresh = false) => {
+    set({ isSummaryLoading: true });
+    try {
+      const res = await axiosInstance.get(`/messages/summary/${chatId}${refresh ? '?refresh=true' : ''}`);
+      set({ pinnedSummary: res.data.summary });
+    } catch (error) {
+      console.error("Failed to get pinned summary");
+    } finally {
+      set({ isSummaryLoading: false });
+    }
+  },
+
+  getActionItems: async (chatId) => {
+    set({ isActionItemsLoading: true });
+    try {
+      const res = await axiosInstance.get(`/messages/action-items/${chatId}`);
+      set({ actionItems: res.data.actionItems || [] });
+    } catch (error) {
+      toast.error("Failed to extract action items");
+    } finally {
+      set({ isActionItemsLoading: false });
+    }
+  },
+
+  searchMessages: async (chatId, query) => {
+    if (!query) {
+      set({ searchResults: [] });
+      return;
+    }
+    set({ isSearchLoading: true });
+    try {
+      const res = await axiosInstance.get(`/messages/search/${chatId}?q=${encodeURIComponent(query)}`);
+      set({ searchResults: res.data || [] });
+    } catch (error) {
+      toast.error("Search failed");
+    } finally {
+      set({ isSearchLoading: false });
+    }
+  },
+
+  translateMessage: async (messageId, text) => {
+    set((state) => ({ isTranslating: { ...state.isTranslating, [messageId]: true } }));
+    try {
+      const res = await axiosInstance.post("/messages/ai", {
+        feature: "translate",
+        chatId: get().selectedChat?._id || "chatbot-session",
+        message: text
+      });
+      set((state) => ({
+        translations: { ...state.translations, [messageId]: res.data.result }
+      }));
+    } catch (error) {
+      toast.error("Failed to translate message");
+    } finally {
+      set((state) => ({ isTranslating: { ...state.isTranslating, [messageId]: false } }));
+    }
+  },
+
+  setReplyingTo: (message) => set({ replyingTo: message }),
 
   sendMessage: async (messageData) => {
     const { selectedChat, messages } = get();
@@ -101,7 +213,7 @@ export const useChatStore = create((set, get) => ({
         recommendations: [] 
       });
     } catch (error) {
-      console.error("DEBUG: Failed to send message error:", error);
+      console.error("DEBUG: Failed to send message error:", error.response?.data || error.message);
       toast.error("Failed to send message");
     }
   },
@@ -114,6 +226,32 @@ export const useChatStore = create((set, get) => ({
       });
     } catch (error) {
       toast.error("Failed to delete message");
+    }
+  },
+
+  editMessage: async (messageId, newText) => {
+    try {
+      const res = await axiosInstance.put(`/messages/edit/${messageId}`, { text: newText });
+      set({
+        messages: get().messages.map(m => m._id === messageId ? res.data : m)
+      });
+      return true;
+    } catch (error) {
+      console.error("DEBUG: Failed to edit message:", error.response?.data || error.message);
+      toast.error("Failed to edit message");
+      return false;
+    }
+  },
+
+  reactToMessage: async (messageId, emoji) => {
+    try {
+      const res = await axiosInstance.post(`/messages/react/${messageId}`, { emoji });
+      set({
+        messages: get().messages.map(m => m._id === messageId ? { ...m, reactions: res.data.reactions } : m)
+      });
+    } catch (error) {
+      console.error("DEBUG: Failed to react to message:", error.response?.data || error.message);
+      toast.error("Failed to add reaction");
     }
   },
 
@@ -255,6 +393,18 @@ export const useChatStore = create((set, get) => ({
         });
       }
     });
+
+    socket.on("messageEdited", (editedMessage) => {
+      set({
+        messages: get().messages.map(m => m._id === editedMessage._id ? editedMessage : m)
+      });
+    });
+
+    socket.on("messageReaction", ({ messageId, reactions }) => {
+      set({
+        messages: get().messages.map(m => m._id === messageId ? { ...m, reactions } : m)
+      });
+    });
   },
 
   unsubscribeFromSocket: () => {
@@ -265,10 +415,12 @@ export const useChatStore = create((set, get) => ({
     socket.off("stopTyping");
     socket.off("messageDeleted");
     socket.off("messagesSeen");
+    socket.off("messageEdited");
+    socket.off("messageReaction");
   },
 
   setSelectedChat: (chat) => {
-    set({ selectedChat: chat, recommendations: [], aiResult: null });
+    set({ selectedChat: chat, recommendations: [], aiResult: null, pinnedSummary: null, actionItems: [], searchResults: [], translations: {} });
     if (chat) {
       get().getMessages(chat._id);
       // Trigger auto-reply based on the last received message in this chat

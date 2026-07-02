@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useChatStore } from "../../store/useChatStore";
 import { useAuthStore } from "../../store/useAuthStore";
 import SidebarSkeleton from "../skeletons/SidebarSkeleton";
+import StatusRail from "./StatusRail";
 import { Settings, Mic, Headphones, Search, ChevronDown, UserPlus } from "lucide-react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -58,7 +59,8 @@ const Sidebar = () => {
   if (isUsersLoading && users.length === 0) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-72 lg:w-80 flex flex-col bg-white/[0.01] backdrop-blur-2xl border-r border-white/5 transition-all duration-300 relative z-30 shadow-2xl">
+    <aside className="h-full w-72 lg:w-80 flex flex-col bg-white/[0.01] backdrop-blur-2xl border-r border-white/5 transition-all duration-300 relative z-30 shadow-2xl overflow-hidden">
+      <StatusRail />
       <div className="p-6 border-b border-white/5 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

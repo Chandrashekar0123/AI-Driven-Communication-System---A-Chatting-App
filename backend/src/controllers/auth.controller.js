@@ -118,13 +118,23 @@ export const updateProfile = async (req, res) => {
     if (status !== undefined) updates.status = status;
 
     if (profilePic) {
-      const uploadResponse = await cloudinary.uploader.upload(profilePic);
-      updates.profilePic = uploadResponse.secure_url;
+      try {
+        const uploadResponse = await cloudinary.uploader.upload(profilePic);
+        updates.profilePic = uploadResponse.secure_url;
+      } catch (cloudinaryErr) {
+        console.warn("Cloudinary upload failed, storing profilePic directly in MongoDB database:", cloudinaryErr.message);
+        updates.profilePic = profilePic;
+      }
     }
     
     if (coverPhoto) {
-      const uploadResponse = await cloudinary.uploader.upload(coverPhoto);
-      updates.coverPhoto = uploadResponse.secure_url;
+      try {
+        const uploadResponse = await cloudinary.uploader.upload(coverPhoto);
+        updates.coverPhoto = uploadResponse.secure_url;
+      } catch (cloudinaryErr) {
+        console.warn("Cloudinary upload failed, storing coverPhoto directly in MongoDB database:", cloudinaryErr.message);
+        updates.coverPhoto = coverPhoto;
+      }
     }
 
     if (Object.keys(updates).length === 0) {
@@ -135,12 +145,12 @@ export const updateProfile = async (req, res) => {
       userId,
       updates,
       { new: true }
-    );
+    ).select("-password");
 
     res.status(200).json(updatedUser);
   } catch (error) {
     console.log("error in update profile:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: `Internal server error: ${error.message}` });
   }
 };
 

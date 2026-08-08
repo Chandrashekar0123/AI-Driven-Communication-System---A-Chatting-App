@@ -1,7 +1,8 @@
-import { Home, MessageSquare, Settings, LogOut, Sparkles, Compass, Plus, Bot } from "lucide-react";
+import { Home, MessageSquare, Settings, LogOut, Sparkles, Compass, Plus, Bot, Lock } from "lucide-react";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useChatStore } from "../../store/useChatStore";
 import { Link, useLocation } from "react-router-dom";
+import SecretVaultModal from "../chat/SecretVaultModal";
 import toast from "react-hot-toast";
 import { useState } from "react";
 
@@ -9,6 +10,7 @@ const ServerRail = () => {
   const { authUser, logout } = useAuthStore();
   const { setSelectedChat, selectedChat, aiResult, groups } = useChatStore();
   const location = useLocation();
+  const [isVaultOpen, setIsVaultOpen] = useState(false);
 
   const isAIChatActive = location.pathname === "/ai-chat";
 
@@ -23,8 +25,6 @@ const ServerRail = () => {
         </div>
       </div>
 
-
-
       <div className="flex flex-col gap-3 items-center">
 
         {/* AI Chatbot Button (like WhatsApp AI) */}
@@ -37,6 +37,16 @@ const ServerRail = () => {
             AI Chatbot
           </div>
         </Link>
+
+        {/* Secret Vault Button */}
+        <div className="relative group cursor-pointer" onClick={() => setIsVaultOpen(true)}>
+          <div className="size-12 rounded-2xl group-hover:rounded-xl transition-all duration-300 flex items-center justify-center shadow-lg border border-purple-500/20 bg-purple-500/10 text-purple-400 hover:bg-purple-500 hover:text-white hover:border-transparent">
+            <Lock className="size-5" />
+          </div>
+          <div className="absolute left-14 top-1/2 -translate-y-1/2 bg-[#111214] text-white text-xs font-bold px-3 py-1.5 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-200 shadow-xl border border-white/10 z-50">
+            Secret Vault
+          </div>
+        </div>
 
         {/* Magic AI Hub */}
         <div className="relative group cursor-pointer" onClick={() => {
@@ -84,6 +94,7 @@ const ServerRail = () => {
           </div>
         </div>
       </div>
+      <SecretVaultModal isOpen={isVaultOpen} onClose={() => setIsVaultOpen(false)} />
     </nav>
   );
 };

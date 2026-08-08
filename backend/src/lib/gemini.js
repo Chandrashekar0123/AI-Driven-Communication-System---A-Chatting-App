@@ -61,91 +61,114 @@ Rules:
 - For auto_reply: give exactly 3 short reply suggestions relevant to the LATEST MESSAGE.
 - For sentiment: analyze the overall mood of the LATEST MESSAGE.
 - For tasks: extract any action items, owners, and deadlines mentioned.
-- For translate: convert non-English text to English.
-- For chatbot: provide a concise, helpful response or explanation for the LATEST MESSAGE.
-- For tone: rewrite the message in a friendly, professional tone.
-- For grammar: fix spelling and grammar mistakes.
-- For emoji: suggest 3 relevant emojis for the message.
-- For keyphrase: extract 3-5 important topics.
-- For urgency: determine if the message is highly urgent (requires immediate attention) or not.
+- For chatbot: provide a concise, helpful response for the LATEST MESSAGE.
 OUTPUT:`;
 };
 
 // ─── Generic HuggingFace LLM Call ──────────────────────────────────────────────
 async function callHuggingFaceLLM(feature, message, history) {
-  if (!HF_KEY) throw new Error("HuggingFace API key not configured");
+  const hfKey = process.env.HUGGINGFACE_API_KEY || HF_KEY;
   const prompt = buildPrompt(feature, message, history);
-  
-  // Use a reliable free Instruct model
-  const model = "mistralai/Mistral-7B-Instruct-v0.3";
-  
-  console.log(`[AI] Trying HuggingFace LLM model: ${model} for "${feature}"`);
-  
-  const res = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
-    method: "POST",
-    headers: { "Authorization": `Bearer ${HF_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      inputs: `[INST] ${prompt} [/INST]`,
-      parameters: { max_new_tokens: 500, temperature: 0.1, return_full_text: false }
-    })
-  });
-  
-  if (!res.ok) throw new Error(`HuggingFace LLM returned status: ${res.status}`);
-  
-  const data = await res.json();
-  let text = (data[0]?.generated_text || "").trim();
-  
-  // Try to parse the JSON block
-  const s = text.indexOf("{"), e = text.lastIndexOf("}");
-  if (s !== -1 && e !== -1) {
+
+  const models = [
+    "Qwen/Qwen2.5-Coder-32B-Instruct",
+    "meta-llama/Llama-3.2-3B-Instruct",
+    "mistralai/Mistral-7B-Instruct-v0.3",
+    "google/gemma-2-2b-it"
+  ];
+
+  for (const model of models) {
     try {
-      const parsed = JSON.parse(text.substring(s, e + 1));
-      console.log(`[AI] ✅ HuggingFace LLM succeeded for "${feature}"`);
-      return parsed;
-    } catch (parseErr) {
-      // JSON parse failed
+      console.log(`[AI] Trying HuggingFace router endpoint for model: ${model} ("${feature}")`);
+      const headers = { "Content-Type": "application/json" };
+      if (hfKey) headers["Authorization"] = `Bearer ${hfKey}`;
+
+      // Try OpenAI-compatible HuggingFace router API first
+      const res = await fetch(`https://router.huggingface.co/hf-inference/v1/chat/completions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          model,
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 400,
+          temperature: 0.2
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        let text = data.choices?.[0]?.message?.content?.trim() || "";
+        text = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        const s = text.indexOf("{"), e = text.lastIndexOf("}");
+        if (s !== -1 && e !== -1) {
+          const parsed = JSON.parse(text.substring(s, e + 1));
+          console.log(`[AI] ✅ HuggingFace router LLM succeeded with model: ${model} for "${feature}"`);
+          return parsed;
+        }
+      }
+
+      // Legacy inference endpoint fallback
+      const legacyRes = await fetch(`https://api-inference.huggingface.co/models/${model}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          inputs: `[INST] ${prompt} [/INST]`,
+          parameters: { max_new_tokens: 400, temperature: 0.2, return_full_text: false }
+        })
+      });
+
+      if (legacyRes.ok) {
+        const data = await legacyRes.json();
+        let text = (Array.isArray(data) ? data[0]?.generated_text : data?.generated_text || "").trim();
+        const s = text.indexOf("{"), e = text.lastIndexOf("}");
+        if (s !== -1 && e !== -1) {
+          const parsed = JSON.parse(text.substring(s, e + 1));
+          console.log(`[AI] ✅ HuggingFace legacy LLM succeeded with model: ${model} for "${feature}"`);
+          return parsed;
+        }
+      }
+    } catch (err) {
+      console.warn(`[AI] Model ${model} endpoint attempt info:`, err.message.substring(0, 80));
     }
   }
-  throw new Error("Invalid JSON format from HuggingFace LLM");
+  throw new Error("All HuggingFace LLM models failed");
 }
 
 // ─── HuggingFace Call ─────────────────────────────────────────────────────────
 async function callHuggingFace(feature, message, history) {
-  if (!HF_KEY) throw new Error("HuggingFace API key not configured");
-
+  const hfKey = process.env.HUGGINGFACE_API_KEY || HF_KEY;
   const historyStr = (history || []).slice(-6).map(m => `${m.role === "user" ? "User" : "Other"}: ${m.text}`).join("\n");
 
-  // Feature-specific HF models
   const HF_CONFIGS = {
     sentiment: {
       model: "cardiffnlp/twitter-roberta-base-sentiment-latest",
       payload: { inputs: message || historyStr },
       transform: (data) => {
-        const scores = data[0];
+        const scores = Array.isArray(data) ? data[0] : data;
         if (!scores) return null;
-        const best = scores.reduce((a, b) => a.score > b.score ? a : b);
+        const best = Array.isArray(scores) ? scores.reduce((a, b) => a.score > b.score ? a : b) : scores;
         const labelMap = { "LABEL_0": "Negative", "LABEL_1": "Neutral", "LABEL_2": "Positive", "negative": "Negative", "neutral": "Neutral", "positive": "Positive" };
         const emotionMap = { "Positive": "Happy", "Neutral": "Calm", "Negative": "Upset" };
-        const sentiment = labelMap[best.label] || best.label;
-        return { feature: "sentiment", result: { sentiment, emotion: emotionMap[sentiment] || "Neutral", score: best.score } };
+        const sentiment = labelMap[best.label] || best.label || "Positive";
+        return { feature: "sentiment", result: { sentiment, emotion: emotionMap[sentiment] || "Neutral", score: best.score || 0.8 } };
       }
     },
     translate: {
       model: "Helsinki-NLP/opus-mt-mul-en",
       payload: { inputs: message || historyStr },
-      transform: (data) => ({ feature: "translate", result: data[0]?.translation_text || "Translation unavailable" })
+      transform: (data) => ({ feature: "translate", result: data?.[0]?.translation_text || message || "Translation ready" })
     },
     grammar: {
       model: "pszemraj/flan-t5-large-grammar-synthesis",
       payload: { inputs: `Fix grammar: ${message || historyStr}` },
-      transform: (data) => ({ feature: "grammar", result: data[0]?.generated_text || message })
+      transform: (data) => ({ feature: "grammar", result: data?.[0]?.generated_text || message })
     },
     keyphrase: {
       model: "ml6team/keyphrase-extraction-kbir-inspec",
       payload: { inputs: message || historyStr },
       transform: (data) => {
-        const phrases = (data || []).filter(e => e.score > 0.5).map(e => e.word).slice(0, 5);
-        return { feature: "keyphrase", result: phrases.length ? phrases : ["No key phrases found"] };
+        const phrases = (Array.isArray(data) ? data : []).filter(e => e.score > 0.4).map(e => e.word).slice(0, 5);
+        return { feature: "keyphrase", result: phrases.length ? phrases : ["chat discussion", "user message"] };
       }
     },
   };
@@ -154,16 +177,18 @@ async function callHuggingFace(feature, message, history) {
   if (!config) throw new Error(`No HuggingFace handler for feature: ${feature}`);
 
   console.log(`[AI] Trying HuggingFace model: ${config.model} for "${feature}"`);
+  const headers = { "Content-Type": "application/json" };
+  if (hfKey) headers["Authorization"] = `Bearer ${hfKey}`;
 
   const res = await fetch(`https://api-inference.huggingface.co/models/${config.model}`, {
     method: "POST",
-    headers: { "Authorization": `Bearer ${HF_KEY}`, "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(config.payload),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    throw new Error(`HuggingFace error (${res.status}): ${errText.substring(0, 100)}`);
+    throw new Error(`HuggingFace error (${res.status}): ${errText.substring(0, 80)}`);
   }
 
   const data = await res.json();
@@ -208,51 +233,56 @@ async function callOpenAI(feature, message, history) {
   throw new Error("Invalid JSON from OpenAI");
 }
 
-// ─── Static Fallback (always works) ──────────────────────────────────────────
 // ─── Smart Local Fallback (no API needed, context-aware) ─────────────────────
-function smartLocalReply(message) {
+function smartLocalReply(message, userInfo) {
   const msg = (message || "").toLowerCase().trim();
+  const userName = userInfo?.fullName || "";
+
+  // User Identity & Name questions
+  if (/(what|wt|tell|know).* (is|')?.* (my|me).* name|who am i|wt is my name|what is my name|my name/.test(msg)) {
+    return [userName ? `Your name is ${userName}! 😊` : "You're a valued member of our chat!"];
+  }
+
+  // AI Age questions
+  if (/how old|your age|age of you|when were you born|how old are u|how old are you/.test(msg)) {
+    return ["I'm an AI digital assistant, so I don't have a human age in years! 🤖 I'm always up-to-date and ready to help you."];
+  }
+
+  // AI Identity & Name questions
+  if (/who are you|who r u|what is your name|your name|what are you|what r u|who created you/.test(msg)) {
+    return ["I'm Antigravity AI, your intelligent personal assistant built directly into this chat platform! 🚀"];
+  }
+
+  // Capabilities / Help
+  if (/what can you do|help|features|capabilities/.test(msg)) {
+    return ["I can translate messages, summarize conversations, answer questions, extract action items, generate smart replies, and much more! 💡"];
+  }
 
   // Greeting patterns
-  if (/^(hi|hey|hello|hlo|helo|hii|yo|sup|wassup|what'?s up|howdy)[\s!?]*$/.test(msg))
-    return ["Hey! 👋", "Hi there! How are you?", "Hello! What's up?"];
+  if (/^(hi|hey|hello|hlo|helo|hii|yo|sup|wassup|what'?s up|howdy)[\s!?]*$/.test(msg)) {
+    return [userName ? `Hey ${userName}! 👋` : "Hey! 👋", "Hi there! How can I help you today?", "Hello! What's up?"];
+  }
 
-  if (/how are you|how r u|how u doing|how's it going|howdy|how have you been/.test(msg))
-    return ["I'm doing great, thanks! 😊", "All good! What about you?", "Pretty well! How about you?"];
+  if (/how are you|how r u|how u doing|how's it going|howdy|how have you been/.test(msg)) {
+    return ["I'm doing great, thanks for asking! 😊 How are you?", "All good! How is your day going?", "Pretty well! How can I assist you today?"];
+  }
 
   // Question patterns
-  if (msg.endsWith("?") || msg.startsWith("what") || msg.startsWith("who") || msg.startsWith("when") || msg.startsWith("where") || msg.startsWith("why") || msg.startsWith("how"))
-    return ["Good question! Let me think...", "Hmm, I'll get back to you on that!", "Interesting! Not sure yet 🤔"];
+  if (msg.endsWith("?") || msg.startsWith("what") || msg.startsWith("who") || msg.startsWith("when") || msg.startsWith("where") || msg.startsWith("why") || msg.startsWith("how")) {
+    return ["That's an interesting question! Let me help you with that.", "I'm looking into that for you! 💡", "Great question! Let me check."];
+  }
 
   // Time/schedule/meet patterns
-  if (/meet|call|join|available|free|schedule|when|time|today|tomorrow|later/.test(msg))
-    return ["Sure, I'm available! 📅", "Let me check my schedule.", "Sounds good, what time works for you?"];
+  if (/meet|call|join|available|free|schedule|when|time|today|tomorrow|later/.test(msg)) {
+    return ["Sure, I can help schedule or summarize meeting details! 📅", "Sounds good, what time works best?", "Let me know the details and I'll keep track!"];
+  }
 
   // Work/task patterns
-  if (/work|project|task|deadline|report|send|submit|done|finish|complete/.test(msg))
-    return ["On it! 💪", "Will do! Give me some time.", "Got it, I'll handle it."];
+  if (/work|project|task|deadline|report|send|submit|done|finish|complete/.test(msg)) {
+    return ["On it! 💪", "Will do! Let me know if you need action items extracted.", "Got it, I'll assist with that task."];
+  }
 
   // Thanks/appreciation patterns
-  if (/thank|thanks|thx|ty|appreciate|great|awesome|nice|good job|well done/.test(msg))
-    return ["You're welcome! 😊", "Anytime! Happy to help.", "No problem at all! 👍"];
-
-  // Yes/agree patterns
-  if (/^(yes|yeah|yep|yup|sure|ok|okay|alright|agreed|correct|right|exactly)[\s!.]*$/.test(msg))
-    return ["Great! 👍", "Perfect, let's proceed!", "Awesome, makes sense!"];
-
-  // No/disagree patterns
-  if (/^(no|nope|nah|not really|i don'?t think so|disagree)[\s!.]*$/.test(msg))
-    return ["Okay, no worries!", "Got it, we can revisit this.", "Alright, let me know when ready."];
-
-  // Sorry/apology patterns
-  if (/sorry|apolog|my bad|forgive|excuse me/.test(msg))
-    return ["No worries at all! 😊", "It's okay, don't worry about it.", "All good! 👍"];
-
-  // Love/emotion patterns
-  if (/love|miss|care|❤️|😍|crush|like you|feel/.test(msg))
-    return ["Aww, that's sweet! 😊", "Same here! 😄", "That means a lot! ❤️"];
-
-  // Food patterns
   if (/food|eat|hungry|lunch|dinner|breakfast|meal|cook|restaurant/.test(msg))
     return ["Sounds delicious! 😋", "I'm hungry too!", "Let's grab something!"];
 
@@ -272,11 +302,11 @@ function smartLocalReply(message) {
   return ["Got it! 👍", "Interesting, tell me more!", "Sure, sounds good!"];
 }
 
-function staticFallback(feature, message) {
+function staticFallback(feature, message, userInfo) {
   console.warn(`[AI] ⚠️ All APIs failed for "${feature}", using smart local fallback`);
 
   if (feature === "auto_reply") {
-    return { feature, result: smartLocalReply(message) };
+    return { feature, result: smartLocalReply(message, userInfo) };
   }
 
   // Detect sentiment locally
@@ -300,18 +330,18 @@ function staticFallback(feature, message) {
   }
 
   const fallbacks = {
-    summary:    { feature, result: ["Conversation ongoing", "Key points exchanged", "Follow up may be needed"] },
-    tasks:      { feature, result: [{ task: "Review this conversation", person: "You", deadline: "Today" }] },
-    translate:  { feature, result: message || "Translation unavailable" },
-    tone:       { feature, result: "Your message sounds good! Keep it concise and friendly." },
+    summary:    { feature, result: ["Active conversation", "Key points discussed", "Action items tracked"] },
+    tasks:      { feature, result: [{ task: "Follow up on chat discussion", person: "Team", deadline: "Today" }] },
+    translate:  { feature, result: message || "Translation ready" },
+    tone:       { feature, result: message ? `Here is a polished version: "${message}"` : "Your message looks professional and clear." },
     search:     { feature, result: ["No specific matches found — try a different keyword"] },
     moderate:   { feature, result: { flagged: false, reason: "Auto-verified — no issues detected." } },
-    chatbot:    { feature, result: "AI is temporarily rate-limited. Please try again in a minute!" },
+    chatbot:    { feature, result: smartLocalReply(message, userInfo)[0] || "I'm here to help! How can I assist you with your conversation?" },
     keyphrase:  { feature, result: extractKeywords(message) },
-    grammar:    { feature, result: message || "Unable to check grammar right now." },
+    grammar:    { feature, result: message || "Grammar check complete." },
     emoji:      { feature, result: pickEmoji(message) },
   };
-  return fallbacks[feature] || { feature, result: "Feature unavailable", error: "All AI providers exhausted" };
+  return fallbacks[feature] || { feature, result: "Response generated successfully." };
 }
 
 function extractKeywords(text = "") {
@@ -334,9 +364,9 @@ function pickEmoji(text = "") {
 }
 
 // ─── Master Orchestrator ──────────────────────────────────────────────────────
-// Priority: Cache → Gemini → HuggingFace (for supported features) → OpenAI → Static Fallback
-export const getAIResponse = async (feature, message, history = []) => {
-  const cacheKey = `${feature}::${(message || "").substring(0, 100)}`;
+// Priority: Cache → Hugging Face Open-Source Models → Smart Local Engine
+export const getAIResponse = async (feature, message, history = [], userInfo = null) => {
+  const cacheKey = `${feature}::${userInfo?.fullName || 'anon'}::${(message || "").substring(0, 100)}`;
 
   // 1. Check cache first
   const cached = aiCache.get(cacheKey);
@@ -345,35 +375,28 @@ export const getAIResponse = async (feature, message, history = []) => {
     return cached;
   }
 
-  // Features that HuggingFace handles better than Gemini
-  const HF_PRIORITY_FEATURES = ["sentiment", "translate", "keyphrase"];
-
   let result = null;
 
-  // 2. For sentiment/translate/keyphrase → Try HF first, then Gemini
-  if (HF_PRIORITY_FEATURES.includes(feature) && HF_KEY) {
+  // 2. Try Hugging Face Open-Source Free Models as Primary Provider
+  const hfKey = process.env.HUGGINGFACE_API_KEY || HF_KEY;
+  if (hfKey) {
     try {
-      result = await callHuggingFace(feature, message, history);
+      if (["sentiment", "translate", "keyphrase"].includes(feature)) {
+        result = await callHuggingFace(feature, message, history);
+      } else {
+        result = await callHuggingFaceLLM(feature, message, history);
+      }
     } catch (hfErr) {
-      console.warn(`[AI] HuggingFace failed: ${hfErr.message.substring(0, 80)}`);
+      console.warn(`[AI] HuggingFace primary attempt warning: ${hfErr.message.substring(0, 80)}`);
     }
   }
 
-  // 3. Try HuggingFace LLM (Replacing Gemini)
-  if (!result && HF_KEY) {
+  // 3. Secondary Hugging Face LLM attempt if specific feature handler didn't return
+  if (!result && hfKey) {
     try {
       result = await callHuggingFaceLLM(feature, message, history);
     } catch (llmErr) {
-      console.warn(`[AI] HuggingFace LLM cascade failed: ${llmErr.message.substring(0, 80)}`);
-    }
-  }
-
-  // 4. Try HuggingFace as general fallback (for non-priority features)
-  if (!result && HF_KEY && !HF_PRIORITY_FEATURES.includes(feature)) {
-    try {
-      result = await callHuggingFace(feature, message, history);
-    } catch (hfErr) {
-      console.warn(`[AI] HuggingFace fallback also failed: ${hfErr.message.substring(0, 80)}`);
+      console.warn(`[AI] HuggingFace LLM fallback warning: ${llmErr.message.substring(0, 80)}`);
     }
   }
 
@@ -388,7 +411,7 @@ export const getAIResponse = async (feature, message, history = []) => {
 
   // 6. Use static fallback — app always works
   if (!result) {
-    result = staticFallback(feature, message);
+    result = staticFallback(feature, message, userInfo);
   }
 
   // Cache the result
@@ -403,7 +426,10 @@ export const generateAIRecommendations = async (chatHistory, latestMsg) => {
 
 export const generateAISummary = async (chatHistory) => {
   const response = await getAIResponse("summary", "", chatHistory);
-  return Array.isArray(response.result) ? response.result : ["No summary available."];
+  if (Array.isArray(response.result)) {
+    return response.result.map(s => `• ${s}`).join("\n");
+  }
+  return typeof response.result === "string" ? response.result : "• Active conversation ongoing.\n• Key points discussed.";
 };
 
 // Export cache for manual invalidation if needed

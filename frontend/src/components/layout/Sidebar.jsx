@@ -66,7 +66,7 @@ const Sidebar = () => {
       <div className="p-6 border-b border-white/5 space-y-5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h2 className="font-black text-[10px] uppercase tracking-[0.3em] text-slate-500">Private Stream</h2>
+            <h2 className="font-black text-[10px] uppercase tracking-[0.25em] text-slate-400">Conversations</h2>
             <ChevronDown className="size-3 text-slate-500" />
           </div>
           <div className="flex items-center gap-1">
@@ -84,7 +84,7 @@ const Sidebar = () => {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-500 group-focus-within:text-purple-400 transition-colors z-10" />
           <input 
             type="text" 
-            placeholder="Search stream..."
+            placeholder="Search contacts..."
             value={searchQuery}
             onChange={(e) => {
               setSearchQuery(e.target.value);
@@ -119,29 +119,35 @@ const Sidebar = () => {
                 {unreadCounts[chat._id] > 0 && <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-lg min-w-[18px] text-center shadow-lg shadow-rose-500/30">{unreadCounts[chat._id]}</span>}
               </div>
               <div className="text-[10px] truncate flex items-center gap-1.5 font-bold">
-                {typingUsers[chat._id]?.length > 0 ? <span className="text-purple-400 animate-pulse uppercase tracking-widest">Transmitting...</span> : <span className="opacity-40 uppercase tracking-[0.15em]">{chat.type === 'group' ? 'Server Node' : 'Neural Link'}</span>}
+                {typingUsers[chat._id]?.length > 0 ? (
+                  <span className="text-purple-400 animate-pulse font-bold">Typing...</span>
+                ) : (
+                  <span className="opacity-50 font-medium">
+                    {chat.type === 'group' ? 'Group Chat' : (onlineUsers.includes(chat._id) ? 'Online' : 'Offline')}
+                  </span>
+                )}
               </div>
             </div>
           </button>
         ))}
       </div>
 
-      <div className="p-4 bg-black/40 backdrop-blur-3xl border-t border-white/5 flex items-center gap-4">
-        <div className="relative group cursor-pointer">
-          <div className="size-11 rounded-xl overflow-hidden border border-white/10 shadow-2xl transition-all duration-500 group-hover:scale-110">
-            <img src={authUser.profilePic || "/avatar.png"} alt="me" className="w-full h-full object-cover" />
+      <div className="p-4 bg-black/40 backdrop-blur-3xl border-t border-white/5 flex items-center gap-3">
+        <Link to="/profile" className="flex items-center gap-3 flex-1 min-w-0 group">
+          <div className="relative shrink-0">
+            <div className="size-10 rounded-xl overflow-hidden border border-white/10 shadow-lg group-hover:scale-105 transition-transform">
+              <img src={authUser.profilePic || "/avatar.png"} alt="me" className="w-full h-full object-cover" />
+            </div>
+            <div className="absolute -bottom-0.5 -right-0.5 size-3 bg.emerald-500 bg-[#23A559] rounded-full ring-2 ring-black"></div>
           </div>
-          <div className="absolute -bottom-1 -right-1 size-4 bg-[#23A559] rounded-full ring-2 ring-black shadow-lg"></div>
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-xs font-black text-white truncate tracking-tight">{authUser.fullName}</div>
-          <div className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-0.5">Stream Active</div>
-        </div>
-        <div className="flex gap-1">
-          <button onClick={() => toast.success("Microphone toggled")} className="p-2 rounded-lg hover:bg-white/10 text-slate-500 hover:text-white transition-all"><Mic size={16} /></button>
-          <button onClick={() => toast.success("Audio toggled")} className="p-2 rounded-lg hover:bg-white/10 text-slate-500 hover:text-white transition-all"><Headphones size={16} /></button>
-          <Link to="/settings" className="p-2 rounded-lg hover:bg-white/10 text-slate-500 hover:text-white transition-all"><Settings size={16} /></Link>
-        </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-xs font-bold text-white truncate group-hover:text-purple-300 transition-colors">{authUser.fullName}</div>
+            <div className="text-[10px] text-emerald-400 font-semibold mt-0.5">Online</div>
+          </div>
+        </Link>
+        <Link to="/settings" className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all shadow-md" title="Settings">
+          <Settings size={18} />
+        </Link>
       </div>
 
       {showInviteModal && (

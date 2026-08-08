@@ -1,14 +1,18 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
 import { LogOut, MessageSquare, Settings, User } from "lucide-react";
 
 const Navbar = () => {
   const { logout, authUser } = useAuthStore();
+  const location = useLocation();
+
+  const isSettings = location.pathname === "/settings";
+  const isProfile = location.pathname === "/profile";
 
   return (
     <header className="fixed w-full top-0 z-50 px-6 pt-6 transition-all duration-300">
       <div className="max-w-7xl mx-auto">
-        <div className="bg-white/[0.02] backdrop-blur-3xl rounded-[2.5rem] px-10 h-20 flex items-center justify-between shadow-[0_0_50px_rgba(0,0,0,0.3)] border border-white/5 relative overflow-hidden group">
+        <div className="bg-[#1e1f22]/80 backdrop-blur-3xl rounded-[2.5rem] px-10 h-20 flex items-center justify-between shadow-[0_0_50px_rgba(0,0,0,0.3)] border border-white/10 relative overflow-hidden group">
           {/* Subtle Inner Glow */}
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-transparent to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none" />
           
@@ -19,7 +23,7 @@ const Navbar = () => {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black tracking-tighter text-white">Chatty</span>
-                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-slate-500 group-hover:text-purple-400 transition-colors">Premium</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.4em] text-purple-400 group-hover:text-purple-300 transition-colors">Settings</span>
               </div>
             </Link>
           </div>
@@ -29,18 +33,26 @@ const Navbar = () => {
               <>
                 <Link
                   to={"/settings"}
-                  className="btn btn-ghost btn-sm gap-3 rounded-[1.5rem] hover:bg-white/5 transition-all h-12 px-7 border border-transparent hover:border-white/5 group"
+                  className={`btn btn-ghost btn-sm gap-3 rounded-[1.5rem] transition-all h-12 px-7 border group ${
+                    isSettings 
+                      ? "bg-purple-500/15 border-purple-500/40 text-white shadow-lg" 
+                      : "border-transparent hover:bg-white/5 hover:border-white/5"
+                  }`}
                 >
-                  <Settings className="w-4 h-4 text-slate-400 group-hover:rotate-90 group-hover:text-white transition-all duration-700" />
-                  <span className="hidden sm:inline font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 group-hover:text-white">Neural Config</span>
+                  <Settings className={`w-4 h-4 transition-all duration-700 ${isSettings ? "text-purple-400 rotate-90" : "text-slate-400 group-hover:rotate-90 group-hover:text-white"}`} />
+                  <span className={`hidden sm:inline font-black text-[10px] uppercase tracking-[0.2em] ${isSettings ? "text-purple-300" : "text-slate-400 group-hover:text-white"}`}>Settings</span>
                 </Link>
 
                 <Link 
                   to={"/profile"} 
-                  className="btn btn-ghost btn-sm gap-3 rounded-[1.5rem] hover:bg-white/5 transition-all h-12 px-7 border border-transparent hover:border-white/5 group"
+                  className={`btn btn-ghost btn-sm gap-3 rounded-[1.5rem] transition-all h-12 px-7 border group ${
+                    isProfile 
+                      ? "bg-purple-500/15 border-purple-500/40 text-white shadow-lg" 
+                      : "border-transparent hover:bg-white/5 hover:border-white/5"
+                  }`}
                 >
-                  <User className="w-4 h-4 text-slate-400 group-hover:scale-125 group-hover:text-white transition-all" />
-                  <span className="hidden sm:inline font-black text-[10px] uppercase tracking-[0.2em] text-slate-400 group-hover:text-white">Biometrics</span>
+                  <User className={`w-4 h-4 transition-all ${isProfile ? "text-purple-400 scale-110" : "text-slate-400 group-hover:scale-125 group-hover:text-white"}`} />
+                  <span className={`hidden sm:inline font-black text-[10px] uppercase tracking-[0.2em] ${isProfile ? "text-purple-300" : "text-slate-400 group-hover:text-white"}`}>Profile</span>
                 </Link>
 
                 <div className="w-[1px] h-8 bg-white/5 mx-2" />
@@ -50,7 +62,7 @@ const Navbar = () => {
                   onClick={logout}
                 >
                   <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                  <span className="hidden sm:inline font-black text-[10px] uppercase tracking-[0.2em]">Disconnect</span>
+                  <span className="hidden sm:inline font-black text-[10px] uppercase tracking-[0.2em]">Logout</span>
                 </button>
               </>
             )}

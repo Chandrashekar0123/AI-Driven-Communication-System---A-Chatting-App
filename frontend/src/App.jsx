@@ -37,13 +37,13 @@ const App = () => {
   if (isCheckingAuth && !authUser)
     return <div className="min-h-screen bg-[#1E1F22]" />;
 
-  const isAuthPage = location.pathname === "/login" || location.pathname === "/signup";
-  const isChatPage = location.pathname === "/";
+  const isAuthPage = location.pathname === "/login" || location.pathname === "/signup" || location.pathname === "/forgot-password";
+  const isAppPage = location.pathname === "/" || location.pathname === "/ai-chat" || location.pathname === "/settings" || location.pathname === "/profile";
 
   return (
     <div data-theme={theme} className="min-h-screen antialiased transition-colors duration-300">
-      {/* Hide Navbar on Chat and Auth pages */}
-      {!isChatPage && !isAuthPage && <Navbar />}
+      {/* Hide Navbar on app pages and auth pages */}
+      {!isAppPage && !isAuthPage && <Navbar />}
 
       <Suspense fallback={null}>
         <Routes>

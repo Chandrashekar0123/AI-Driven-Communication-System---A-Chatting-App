@@ -110,6 +110,11 @@ export const useAuthStore = create((set, get) => ({
       query: {
         userId: authUser._id,
       },
+      transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: 15,
+      reconnectionDelay: 1000,
+      withCredentials: true,
     });
     
     console.log("DEBUG: Attempting to connect socket for user:", authUser._id);
@@ -120,7 +125,7 @@ export const useAuthStore = create((set, get) => ({
     });
 
     socket.on("connect_error", (error) => {
-      console.error("DEBUG: Socket connection error:", error.message);
+      console.warn("DEBUG: Socket connection retrying...", error.message);
     });
 
     socket.on("disconnect", (reason) => {

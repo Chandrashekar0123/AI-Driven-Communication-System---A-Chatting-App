@@ -37,7 +37,7 @@ const AIHubPanel = () => {
             <Brain className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-8 text-purple-500 animate-pulse" />
           </div>
           <div className="text-center space-y-2">
-            <p className="text-[10px] font-black text-white uppercase tracking-[0.3em] animate-pulse">Neural Processing...</p>
+            <p className="text-[10px] font-black text-white uppercase tracking-[0.3em] animate-pulse">AI Processing...</p>
             <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Gemini 2.5 → HuggingFace → OpenAI</p>
           </div>
         </div>

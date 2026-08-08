@@ -12,11 +12,16 @@ const AIChatbotPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [speakingId, setSpeakingId] = useState(null);
   const bottomRef = useRef(null);
+  const inputRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   const sendMsg = async (e) => {
     e?.preventDefault();
@@ -27,6 +32,7 @@ const AIChatbotPage = () => {
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
+    setTimeout(() => inputRef.current?.focus(), 10);
 
     try {
       const res = await axiosInstance.post("/messages/ai", {
@@ -157,6 +163,7 @@ const AIChatbotPage = () => {
       <div className="sticky bottom-0 px-4 py-4 bg-[#0d0e12]/95 backdrop-blur-3xl border-t border-white/5 max-w-3xl mx-auto w-full">
         <form onSubmit={sendMsg} className="flex gap-3 items-center">
           <input
+            ref={inputRef}
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}

@@ -6,8 +6,8 @@ import AIHubPanel from "../ai/AIHubPanel";
 import MessageSkeleton from "../skeletons/MessageSkeleton";
 import { useAuthStore } from "../../store/useAuthStore";
 import { formatMessageTime } from "../../lib/utils";
-import { Check, CheckCheck, Trash2, Reply, Sparkles, Edit2, Smile, Globe, Bot } from "lucide-react";
-import EmojiPicker from "emoji-picker-react";
+import { Check, CheckCheck, Trash2, Reply, Sparkles, Edit2, Smile, Globe, Bot, Shield } from "lucide-react";
+import PollMessage from "./PollMessage";
 
 const ChatContainer = () => {
   const {
@@ -194,10 +194,28 @@ const ChatContainer = () => {
                       </div>
                     )}
 
-                    {/* Audio */}
+                    {/* Poll */}
+                    {message.poll?.question && message.poll?.options?.length > 0 && <PollMessage message={message} />}
+
+                    {/* Audio with speed controls */}
                     {message.audio && (
-                      <div className="mb-2">
-                        <audio src={message.audio} controls className="max-w-[200px] h-10 outline-none" />
+                      <div className="mb-2 space-y-1">
+                        <audio id={`audio-${message._id}`} src={message.audio} controls className="max-w-[220px] h-10 outline-none rounded-xl" />
+                        <div className="flex items-center gap-1">
+                          {["1x", "1.5x", "2x"].map((spd) => (
+                            <button
+                              key={spd}
+                              type="button"
+                              onClick={() => {
+                                const el = document.getElementById(`audio-${message._id}`);
+                                if (el) el.playbackRate = parseFloat(spd);
+                              }}
+                              className="text-[9px] font-extrabold px-2 py-0.5 rounded-md bg-white/10 hover:bg-purple-500 hover:text-white transition-all text-slate-300"
+                            >
+                              {spd}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
 
@@ -291,9 +309,31 @@ const ChatContainer = () => {
                           <button
                             onClick={() => translateMessage(message._id, message.text)}
                             className="p-1.5 rounded-lg bg-[#1a1b1e] border border-white/5 text-slate-400 hover:text-purple-400 hover:border-purple-500/30 transition-all shadow-lg"
-                            title="Translate"
+                            title="Instant Translate to English"
                           >
                             <Globe size={13} />
+                          </button>
+                        )}
+
+                        {/* AI Explain / Summarize */}
+                        {message.text && (
+                          <button
+                            onClick={() => runAIFeature("summary", message.text)}
+                            className="p-1.5 rounded-lg bg-[#1a1b1e] border border-white/5 text-slate-400 hover:text-blue-400 hover:border-blue-500/30 transition-all shadow-lg"
+                            title="AI Explain / Summarize"
+                          >
+                            <Sparkles size={13} />
+                          </button>
+                        )}
+
+                        {/* AI Safety Check */}
+                        {message.text && (
+                          <button
+                            onClick={() => runAIFeature("moderate", message.text)}
+                            className="p-1.5 rounded-lg bg-[#1a1b1e] border border-white/5 text-slate-400 hover:text-rose-400 hover:border-rose-500/30 transition-all shadow-lg"
+                            title="AI Safety & Toxicity Audit"
+                          >
+                            <Shield size={13} />
                           </button>
                         )}
 
@@ -301,8 +341,8 @@ const ChatContainer = () => {
                         {message.text && (
                           <button
                             onClick={() => handleAskAI(message)}
-                            className="p-1.5 rounded-lg bg-[#1a1b1e] border border-white/5 text-slate-400 hover:text-purple-400 hover:border-purple-500/30 transition-all shadow-lg"
-                            title="Ask AI about this"
+                            className="p-1.5 rounded-lg bg-[#1a1b1e] border border-white/5 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/30 transition-all shadow-lg"
+                            title="Ask AI Assistant"
                           >
                             <Bot size={13} />
                           </button>

@@ -128,6 +128,16 @@ export const useChatStore = create((set, get) => ({
       get().markAsSeen(chatId);
       // Fetch the pinned summary when chat loads
       get().getPinnedSummary(chatId);
+
+      // Auto-generate smart reply recommendations if last message is from contact
+      if (res.data && res.data.length > 0) {
+        const lastMsg = res.data[res.data.length - 1];
+        const authUser = useAuthStore.getState().authUser;
+        const senderId = typeof lastMsg.senderId === 'object' ? lastMsg.senderId._id : lastMsg.senderId;
+        if (lastMsg && String(senderId) !== String(authUser?._id)) {
+          get().runAIFeature("auto_reply", { message: lastMsg.text || "" });
+        }
+      }
     } catch (error) {
       toast.error("Failed to load messages");
     } finally {
@@ -172,6 +182,17 @@ export const useChatStore = create((set, get) => ({
       toast.error("Search failed");
     } finally {
       set({ isSearchLoading: false });
+    }
+  },
+
+  aiSmartSearchMessages: async (chatId, query) => {
+    if (!query) return null;
+    try {
+      const res = await axiosInstance.post(`/messages/ai-search/${chatId}`, { query });
+      return res.data;
+    } catch (error) {
+      toast.error("AI Smart Search failed");
+      return null;
     }
   },
 
@@ -405,6 +426,26 @@ export const useChatStore = create((set, get) => ({
         messages: get().messages.map(m => m._id === messageId ? { ...m, reactions } : m)
       });
     });
+
+    socket.on("pollUpdated", ({ messageId, poll }) => {
+      set({
+        messages: get().messages.map(m => m._id === messageId ? { ...m, poll } : m)
+      });
+    });
+  },
+
+  votePoll: async (messageId, optionIndex) => {
+    try {
+      const res = await axiosInstance.post(`/messages/poll/vote/${messageId}`, { optionIndex });
+      set({
+        messages: get().messages.map(m => m._id === messageId ? res.data : m)
+      });
+      toast.success("Vote submitted!");
+      return res.data;
+    } catch (error) {
+      toast.error(error.response?.data?.error || "Failed to submit vote");
+      return null;
+    }
   },
 
   unsubscribeFromSocket: () => {

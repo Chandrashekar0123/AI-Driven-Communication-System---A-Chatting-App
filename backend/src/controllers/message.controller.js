@@ -414,7 +414,7 @@ export const handleAIFeature = async (req, res) => {
 
     console.log(`[Controller] AI Feature: "${feature}", Message: "${messageToAnalyze.substring(0, 60)}"`);
 
-    const aiResponse = await getAIResponse(feature, messageToAnalyze, chatHistory);
+    const aiResponse = await getAIResponse(feature, messageToAnalyze, chatHistory, req.user);
     console.log(`[Controller] AI response received for "${feature}"`);
     res.status(200).json(aiResponse);
   } catch (error) {
@@ -561,6 +561,54 @@ export const getActionItems = async (req, res) => {
   }
 };
 
+export const aiSmartSearchMessages = async (req, res) => {
+  try {
+    const { id: chatId } = req.params;
+    const { query } = req.body;
+    const myId = req.user._id;
+
+    if (!query) {
+      return res.status(400).json({ error: "Natural query is required" });
+    }
+
+    const messages = await Message.find({
+      $or: [
+        { senderId: myId, receiverId: chatId },
+        { senderId: chatId, receiverId: myId },
+        { groupId: chatId },
+      ],
+    })
+      .sort({ createdAt: -1 })
+      .limit(60)
+      .populate("senderId", "fullName")
+      .lean();
+
+    if (messages.length === 0) {
+      return res.status(200).json({ answer: "No messages found in this chat yet to analyze.", historyCount: 0 });
+    }
+
+    const historyStr = messages
+      .reverse()
+      .map((m) => {
+        const senderName = m.senderId?.fullName || (m.senderId?._id?.toString() === myId.toString() ? "Me" : "Contact");
+        const timeStr = m.createdAt ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+        return `[${timeStr}] ${senderName}: ${m.text || (m.image ? "[Attached Image]" : "[Attachment]")}`;
+      })
+      .join("\n");
+
+    const promptText = `User asked a natural question about their chat history: "${query}". Answer concisely and accurately based ONLY on the provided chat history. Include key dates, names, or meeting details if mentioned.`;
+    const response = await getAIResponse("chatbot", promptText, historyStr);
+
+    res.status(200).json({
+      answer: response.result || "Could not generate an answer from the recent conversation.",
+      historyCount: messages.length
+    });
+  } catch (error) {
+    console.error("AI Smart Search Error:", error);
+    res.status(500).json({ error: "AI Smart Search failed" });
+  }
+};
+
 export const searchMessages = async (req, res) => {
   try {
     const { id: chatId } = req.params;
@@ -585,17 +633,51 @@ export const searchMessages = async (req, res) => {
     // Use Fuse.js for fuzzy semantic-like search
     const fuse = new Fuse(messages, {
       keys: ["text"],
-      threshold: 0.4,
-      includeScore: true,
-      ignoreLocation: true,
+      threshold: 0.3,
     });
 
-    const results = fuse.search(q).map(result => result.item);
-    
-    // Return top 20 results
-    res.status(200).json(results.slice(0, 20));
+    const results = fuse.search(q).map((res) => res.item);
+    res.status(200).json(results);
   } catch (error) {
     console.error("Error in searchMessages:", error);
-    res.status(500).json({ error: "Search failed" });
+    res.status(500).json({ error: "Failed to search messages" });
+  }
+};
+
+export const votePoll = async (req, res) => {
+  try {
+    const { id: messageId } = req.params;
+    const { optionIndex } = req.body;
+    const myId = req.user._id;
+
+    const message = await Message.findById(messageId);
+    if (!message || !message.poll) {
+      return res.status(404).json({ error: "Poll message not found" });
+    }
+
+    if (optionIndex < 0 || optionIndex >= message.poll.options.length) {
+      return res.status(400).json({ error: "Invalid option index" });
+    }
+
+    // Remove user's previous vote from any option in this poll
+    message.poll.options.forEach((opt) => {
+      opt.votes = opt.votes.filter((vId) => vId.toString() !== myId.toString());
+    });
+
+    // Add vote to chosen option
+    message.poll.options[optionIndex].votes.push(myId);
+    await message.save();
+
+    const updatedMessage = await Message.findById(messageId)
+      .populate("senderId", "fullName profilePic")
+      .populate("poll.options.votes", "fullName profilePic")
+      .lean();
+
+    io.emit("pollUpdated", { messageId, poll: updatedMessage.poll });
+
+    res.status(200).json(updatedMessage);
+  } catch (error) {
+    console.error("Error in votePoll:", error);
+    res.status(500).json({ error: "Failed to submit vote" });
   }
 };

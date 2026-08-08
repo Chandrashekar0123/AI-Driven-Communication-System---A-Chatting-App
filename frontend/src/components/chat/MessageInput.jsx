@@ -1,6 +1,7 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { useChatStore } from "../../store/useChatStore";
-import { Send, X, PlusCircle, Smile, Mic, MicOff, Image, Loader2, Timer } from "lucide-react";
+import { Send, X, PlusCircle, Smile, Mic, MicOff, Image, Loader2, Timer, Sparkles, BarChart2, ChevronUp } from "lucide-react";
+import CreatePollModal from "./CreatePollModal";
 import toast from "react-hot-toast";
 
 // ── Emoji Picker (inline, no dep) ──────────────────────────────────────────
@@ -19,14 +20,88 @@ const MessageInput = () => {
   const [audioBlob, setAudioBlob] = useState(null);
   const [expiresIn, setExpiresIn] = useState(null); // in seconds
   const [showTimerMenu, setShowTimerMenu] = useState(false);
+  const [isDictating, setIsDictating] = useState(false);
+  const [showPollModal, setShowPollModal] = useState(false);
+  const [showAIToolsMenu, setShowAIToolsMenu] = useState(false);
 
   const fileInputRef = useRef(null);
+  const inputRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const timerRef = useRef(null);
 
   const { sendMessage, sendTypingStatus, selectedChat, runAIFeature, replyingTo, setReplyingTo } = useChatStore();
   const typingTimeoutRef = useRef(null);
+
+  // Auto-focus input when chat selection changes or user starts typing anywhere
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [selectedChat]);
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      // If typing printable characters and focus is not inside another form field or modal
+      if (
+        e.key.length === 1 && 
+        !e.ctrlKey && 
+        !e.altKey && 
+        !e.metaKey && 
+        document.activeElement?.tagName !== "INPUT" && 
+        document.activeElement?.tagName !== "TEXTAREA"
+      ) {
+        inputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, []);
+
+  const toggleDictation = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    if (isDictating) {
+      setIsDictating(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      recognition.onstart = () => {
+        setIsDictating(true);
+        toast.success("🎙️ AI Live Voice Dictation listening... Speak now!");
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map((res) => res[0].transcript)
+          .join(" ");
+        setText(transcript);
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Speech recognition error:", event.error);
+        setIsDictating(false);
+      };
+
+      recognition.onend = () => {
+        setIsDictating(false);
+      };
+
+      recognition.start();
+    } catch (err) {
+      setIsDictating(false);
+      toast.error("Failed to start speech dictation.");
+    }
+  };
 
   // ── File & Image ──────────────────────────────────────────────────────────
   const handleFileChange = (e) => {
@@ -100,6 +175,11 @@ const MessageInput = () => {
       if (fileInputRef.current) fileInputRef.current.value = "";
       sendTypingStatus(false);
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      
+      // Auto-re-focus text area so user can immediately type next message!
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 10);
     } catch (err) {
       console.error("Failed to send:", err);
     }
@@ -226,7 +306,7 @@ const MessageInput = () => {
       {showEmoji && (
         <div className="mb-3 mx-2 p-3 rounded-2xl bg-[#1a1b1e] border border-white/10 flex flex-wrap gap-2 animate-in fade-in duration-200">
           {QUICK_EMOJIS.map(emoji => (
-            <button key={emoji} type="button" onClick={() => { setText(t => t + emoji); setShowEmoji(false); }}
+            <button key={emoji} type="button" onClick={() => { setText(t => t + emoji); setShowEmoji(false); setTimeout(() => inputRef.current?.focus(), 10); }}
               className="text-xl hover:scale-125 transition-transform p-1 rounded-lg hover:bg-white/10">
               {emoji}
             </button>
@@ -237,11 +317,11 @@ const MessageInput = () => {
       {/* Timer Menu */}
       {showTimerMenu && (
         <div className="mb-3 mx-2 p-2 rounded-2xl bg-[#1a1b1e] border border-white/10 flex flex-wrap gap-2 animate-in fade-in duration-200 text-xs">
-          <button type="button" onClick={() => { setExpiresIn(null); setShowTimerMenu(false); }} className={`px-3 py-1.5 rounded-lg ${expiresIn === null ? 'bg-purple-500 text-white' : 'hover:bg-white/10 text-slate-300'}`}>Off</button>
-          <button type="button" onClick={() => { setExpiresIn(60); setShowTimerMenu(false); }} className={`px-3 py-1.5 rounded-lg ${expiresIn === 60 ? 'bg-purple-500 text-white' : 'hover:bg-white/10 text-slate-300'}`}>1m</button>
-          <button type="button" onClick={() => { setExpiresIn(3600); setShowTimerMenu(false); }} className={`px-3 py-1.5 rounded-lg ${expiresIn === 3600 ? 'bg-purple-500 text-white' : 'hover:bg-white/10 text-slate-300'}`}>1h</button>
-          <button type="button" onClick={() => { setExpiresIn(86400); setShowTimerMenu(false); }} className={`px-3 py-1.5 rounded-lg ${expiresIn === 86400 ? 'bg-purple-500 text-white' : 'hover:bg-white/10 text-slate-300'}`}>24h</button>
-          <button type="button" onClick={() => { setExpiresIn(604800); setShowTimerMenu(false); }} className={`px-3 py-1.5 rounded-lg ${expiresIn === 604800 ? 'bg-purple-500 text-white' : 'hover:bg-white/10 text-slate-300'}`}>7d</button>
+          <button type="button" onClick={() => { setExpiresIn(null); setShowTimerMenu(false); setTimeout(() => inputRef.current?.focus(), 10); }} className={`px-3 py-1.5 rounded-lg ${expiresIn === null ? 'bg-purple-500 text-white' : 'hover:bg-white/10 text-slate-300'}`}>Off</button>
+          <button type="button" onClick={() => { setExpiresIn(60); setShowTimerMenu(false); setTimeout(() => inputRef.current?.focus(), 10); }} className={`px-3 py-1.5 rounded-lg ${expiresIn === 60 ? 'bg-purple-500 text-white' : 'hover:bg-white/10 text-slate-300'}`}>1m</button>
+          <button type="button" onClick={() => { setExpiresIn(3600); setShowTimerMenu(false); setTimeout(() => inputRef.current?.focus(), 10); }} className={`px-3 py-1.5 rounded-lg ${expiresIn === 3600 ? 'bg-purple-500 text-white' : 'hover:bg-white/10 text-slate-300'}`}>1h</button>
+          <button type="button" onClick={() => { setExpiresIn(86400); setShowTimerMenu(false); setTimeout(() => inputRef.current?.focus(), 10); }} className={`px-3 py-1.5 rounded-lg ${expiresIn === 86400 ? 'bg-purple-500 text-white' : 'hover:bg-white/10 text-slate-300'}`}>24h</button>
+          <button type="button" onClick={() => { setExpiresIn(604800); setShowTimerMenu(false); setTimeout(() => inputRef.current?.focus(), 10); }} className={`px-3 py-1.5 rounded-lg ${expiresIn === 604800 ? 'bg-purple-500 text-white' : 'hover:bg-white/10 text-slate-300'}`}>7d</button>
         </div>
       )}
 
@@ -261,6 +341,74 @@ const MessageInput = () => {
         </div>
       )}
 
+      {/* Single AI Tools Button & Popover */}
+      <div className="relative mb-2 mx-2 inline-block">
+        <button
+          type="button"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setShowAIToolsMenu(prev => !prev)}
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 text-purple-300 border border-purple-500/30 text-xs font-extrabold transition-all shadow-md group hover:scale-105 active:scale-95"
+        >
+          <Sparkles size={14} className="text-purple-400 group-hover:rotate-12 transition-transform" />
+          <span>AI Tools</span>
+          <ChevronUp size={13} className={`transition-transform duration-200 ${showAIToolsMenu ? "rotate-180" : ""}`} />
+        </button>
+
+        {/* Floating Popover Grid with All AI Tools */}
+        {showAIToolsMenu && (
+          <div className="absolute bottom-full mb-2.5 left-0 w-72 sm:w-80 bg-[#1e1f22]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 shadow-2xl z-50 animate-in fade-in slide-in-from-bottom-2 space-y-2">
+            <div className="flex items-center justify-between pb-2 border-b border-white/5">
+              <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 flex items-center gap-1.5">
+                <Sparkles size={12} /> Select AI Feature
+              </span>
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowAIToolsMenu(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10"
+              >
+                <X size={13} />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-1.5 max-h-64 overflow-y-auto no-scrollbar p-0.5">
+              {[
+                { id: "auto_reply", label: "Auto Replies", icon: "⚡", desc: "3 Smart Replies" },
+                { id: "summary", label: "Summarize", icon: "📝", desc: "Key Recap & Tasks" },
+                { id: "chatbot", label: "AI Chat", icon: "🤖", desc: "Ask Anything" },
+                { id: "sentiment", label: "Sentiment", icon: "📊", desc: "Mood & Emotion" },
+                { id: "tasks", label: "Extract Tasks", icon: "🎯", desc: "Assignments" },
+                { id: "keyphrase", label: "Key Topics", icon: "🔑", desc: "Keywords" },
+                { id: "translate", label: "Translate", icon: "🌐", desc: "To English" },
+                { id: "grammar", label: "Fix Grammar", icon: "✍️", desc: "Spelling Check" },
+                { id: "tone", label: "Tone Rewriter", icon: "🎭", desc: "Polish Tone" },
+                { id: "emoji", label: "Emoji Suggest", icon: "😃", desc: "Mood Emojis" },
+                { id: "search", label: "Smart Search", icon: "🔍", desc: "AI Search" },
+                { id: "moderate", label: "Safety Check", icon: "🛡️", desc: "Toxicity Audit" }
+              ].map((tool) => (
+                <button
+                  key={tool.id}
+                  type="button"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    runAIFeature(tool.id);
+                    setShowAIToolsMenu(false);
+                    setTimeout(() => inputRef.current?.focus(), 10);
+                  }}
+                  className="flex flex-col items-start p-2.5 rounded-xl bg-[#2b2d31] hover:bg-purple-500/20 text-left border border-white/5 hover:border-purple-500/30 transition-all hover:scale-[1.02] active:scale-95 group"
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-white group-hover:text-purple-300">
+                    <span>{tool.icon}</span>
+                    <span>{tool.label}</span>
+                  </div>
+                  <span className="text-[9px] font-medium text-slate-400 mt-0.5 truncate w-full">{tool.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Main Input Row */}
       <form onSubmit={handleSendMessage} className="flex items-center gap-3 mx-2">
         <div className="flex-1 flex items-center gap-2 bg-[#1a1b1e] rounded-2xl px-4 py-2.5 border border-white/10 focus-within:border-purple-500/50 focus-within:ring-2 focus-within:ring-purple-500/10 transition-all duration-300 shadow-xl">
@@ -272,6 +420,7 @@ const MessageInput = () => {
 
           {/* Text input */}
           <input
+            ref={inputRef}
             type="text"
             className="flex-1 py-1 bg-transparent border-none outline-none text-sm text-white placeholder:text-slate-600 font-medium"
             placeholder={isRecording ? "Recording..." : `Message ${selectedChat?.fullName || selectedChat?.name || ""}...`}
@@ -284,21 +433,35 @@ const MessageInput = () => {
           {/* Emoji */}
           <button type="button" onClick={() => setShowEmoji(e => !e)}
             className={`text-slate-500 hover:text-purple-400 transition-all hover:scale-110 shrink-0 ${showEmoji ? "text-purple-400" : ""}`}>
-            <Smile size={19} />
+            <Smile size={18} />
           </button>
 
           {/* Timer */}
           <button type="button" onClick={() => setShowTimerMenu(e => !e)}
-            className={`text-slate-500 hover:text-purple-400 transition-all hover:scale-110 shrink-0 ${expiresIn ? "text-purple-400" : ""}`}
+            className={`hidden sm:flex text-slate-500 hover:text-purple-400 transition-all hover:scale-110 shrink-0 ${expiresIn ? "text-purple-400" : ""}`}
             title="Disappearing Message">
-            <Timer size={19} />
+            <Timer size={18} />
+          </button>
+
+          {/* Poll Button */}
+          <button type="button" onClick={() => setShowPollModal(true)}
+            className="hidden sm:flex text-slate-500 hover:text-purple-400 transition-all hover:scale-110 shrink-0"
+            title="Create Poll">
+            <BarChart2 size={18} />
+          </button>
+
+          {/* AI Speech-To-Text Dictation Mic */}
+          <button type="button" onClick={toggleDictation}
+            className={`transition-all hover:scale-110 shrink-0 ${isDictating ? "text-purple-400 animate-pulse" : "text-slate-500 hover:text-purple-400"}`}
+            title={isDictating ? "Listening... Speak now" : "AI Live Voice Dictation (STT)"}>
+            <Sparkles size={17} className={isDictating ? "animate-spin" : ""} />
           </button>
 
           {/* Mic / Audio Rec */}
           <button type="button" onClick={toggleRecording}
             className={`transition-all hover:scale-110 shrink-0 ${isRecording ? "text-red-400 animate-pulse" : "text-slate-500 hover:text-blue-400"}`}
             title={isRecording ? "Stop recording" : "Voice message"}>
-            {isRecording ? <MicOff size={19} /> : <Mic size={19} />}
+            {isRecording ? <MicOff size={18} /> : <Mic size={18} />}
           </button>
 
           <input type="file" accept="*/*" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
@@ -306,6 +469,7 @@ const MessageInput = () => {
 
         {/* Send Button */}
         <button type="submit"
+          onMouseDown={(e) => e.preventDefault()}
           className={`size-12 rounded-2xl flex items-center justify-center transition-all duration-300 shadow-xl shrink-0 ${
             text.trim() || imagePreview || filePreview || audioBlob
               ? "bg-gradient-to-br from-purple-500 to-indigo-500 text-white hover:scale-105 active:scale-95 shadow-purple-500/30"
@@ -315,6 +479,7 @@ const MessageInput = () => {
           <Send size={18} className={text.trim() || imagePreview || filePreview || audioBlob ? "group-hover:translate-x-0.5 transition-transform" : ""} />
         </button>
       </form>
+      <CreatePollModal isOpen={showPollModal} onClose={() => setShowPollModal(false)} />
     </div>
   );
 };

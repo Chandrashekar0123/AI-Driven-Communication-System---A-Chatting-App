@@ -22,8 +22,6 @@ const GroupSettingsModal = ({ isOpen, onClose, group }) => {
 
   if (!isOpen || !group) return null;
 
-  const isAdmin = group.admins?.includes(authUser._id);
-
   const handleAddMember = async () => {
     if (!memberId.trim()) return;
     setLoading(true);
@@ -98,22 +96,38 @@ const GroupSettingsModal = ({ isOpen, onClose, group }) => {
     }
   };
 
+  const checkIsAdmin = (mId) => {
+    const targetId = (typeof mId === 'object' && mId !== null ? mId._id : mId)?.toString();
+    if (!targetId) return false;
+    const singleAdmin = (typeof group.admin === 'object' && group.admin !== null ? group.admin._id : group.admin)?.toString();
+    if (singleAdmin && singleAdmin === targetId) return true;
+    return group.admins?.some(a => (typeof a === 'object' && a !== null ? a._id : a)?.toString() === targetId);
+  };
+
+  const checkIsModerator = (mId) => {
+    const targetId = (typeof mId === 'object' && mId !== null ? mId._id : mId)?.toString();
+    if (!targetId) return false;
+    return group.moderators?.some(m => (typeof m === 'object' && m !== null ? m._id : m)?.toString() === targetId);
+  };
+
+  const isAdmin = checkIsAdmin(authUser._id);
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-[#1e1f22] w-full max-w-md rounded-2xl shadow-2xl border border-white/10 overflow-hidden flex flex-col animate-in slide-in-from-bottom-4 duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="bg-[#1e1f22] w-full max-w-md rounded-3xl shadow-2xl border border-white/10 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200 max-h-[85vh] my-auto">
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
           <h2 className="text-xl font-black text-white flex items-center gap-2">
             <Users className="text-purple-400" /> Group Settings
           </h2>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-all">
+          <button onClick={onClose} className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all">
             <X size={20} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 flex flex-col gap-5 max-h-[60vh] overflow-y-auto">
+        <div className="p-6 flex flex-col gap-5 overflow-y-auto flex-1">
           {/* Add Member (Admins Only) */}
           {isAdmin && (
             <div className="flex flex-col gap-2 p-4 rounded-xl bg-white/5 border border-white/10">
@@ -145,47 +159,46 @@ const GroupSettingsModal = ({ isOpen, onClose, group }) => {
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Group Info</label>
               <input 
                 type="text" 
-                value={editName} 
+                value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="w-full bg-[#111214] border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
+                className="bg-[#111214] border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors"
                 placeholder="Group Name"
               />
               <textarea 
-                value={editDescription} 
+                value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
-                className="w-full bg-[#111214] border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors resize-none h-20"
+                className="bg-[#111214] border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500 transition-colors resize-none h-20"
                 placeholder="Group Description"
               />
               <button 
                 onClick={handleUpdateGroup}
-                disabled={loading || !editName}
-                className="w-full py-2.5 rounded-xl bg-purple-500 text-white font-bold hover:bg-purple-600 transition-colors disabled:opacity-50"
+                disabled={loading}
+                className="py-2 rounded-xl bg-white/10 text-white font-bold hover:bg-white/20 transition-colors"
               >
-                Save Changes
+                Save Info
               </button>
             </div>
           )}
 
-          {/* Members List */}
-          <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Members</label>
+          {/* Member List */}
+          <div className="flex flex-col gap-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+              Members ({group.members?.length || 0})
+            </h3>
             <div className="flex flex-col gap-2">
-              {group.members?.map(member => (
-                <div key={typeof member === 'object' ? member._id : member} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10">
+              {group.members?.map((member) => (
+                <div key={typeof member === 'object' ? member._id : member} className="flex items-center justify-between p-2 rounded-xl bg-white/5 border border-white/5">
                   <div className="flex items-center gap-3">
-                    <div className="size-8 rounded-full bg-[#111214] flex items-center justify-center overflow-hidden">
+                    <div className="size-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
                       {typeof member === 'object' && member.profilePic ? (
-                        <img src={member.profilePic} alt="avatar" className="w-full h-full object-cover" />
+                        <img src={member.profilePic} alt="avatar" className="size-full object-cover" />
                       ) : (
                         <Users size={16} className="text-slate-400" />
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white flex items-center gap-1">
+                      <p className="text-sm font-bold text-white">
                         {typeof member === 'object' ? member.fullName : member}
-                        {group.admins?.includes(typeof member === 'object' ? member._id : member) && (
-                          <Shield size={12} className="text-yellow-500" />
-                        )}
                       </p>
                     </div>
                   </div>

@@ -1,4 +1,4 @@
-import { Sparkles, X, User, Users, MoreVertical, Phone, Video, Search, CheckSquare } from "lucide-react";
+import { Sparkles, X, User, Users, MoreVertical, Phone, Video, Search, CheckSquare, Download, ArrowLeft } from "lucide-react";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useChatStore } from "../../store/useChatStore";
 import { useState } from "react";
@@ -7,8 +7,8 @@ import GroupSettingsModal from "../groups/GroupSettingsModal";
 import SearchMessagesModal from "./SearchMessagesModal";
 
 const ChatHeader = () => {
-  const { selectedChat, setSelectedChat, runAIFeature, isAILoading, typingUsers, isAIHubOpen } = useChatStore();
-  const { onlineUsers } = useAuthStore();
+  const { selectedChat, setSelectedChat, runAIFeature, isAILoading, typingUsers, isAIHubOpen, messages } = useChatStore();
+  const { onlineUsers, authUser } = useAuthStore();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
@@ -23,9 +23,45 @@ const ChatHeader = () => {
     window.dispatchEvent(new Event("start-call"));
   };
 
+  const handleExportChat = () => {
+    if (!messages || messages.length === 0) return;
+    
+    const chatName = selectedChat.fullName || selectedChat.name || "Chat";
+    let textContent = `Chat Export: ${chatName}\n`;
+    textContent += `Date: ${new Date().toLocaleString()}\n`;
+    textContent += `-------------------------------------------------\n\n`;
+    
+    messages.forEach(msg => {
+      const sender = msg.senderId === authUser?._id ? "You" : (msg.senderId === selectedChat._id ? chatName : "User");
+      const time = new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      const content = msg.text || (msg.image ? "[Image]" : "") || (msg.fileUrl ? "[File]" : "") || "";
+      textContent += `[${time}] ${sender}: ${content}\n`;
+    });
+    
+    const blob = new Blob([textContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Chat_Export_${chatName.replace(/\s+/g, '_')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="h-16 px-6 flex items-center justify-between bg-white/[0.02] backdrop-blur-3xl border-b border-white/5 shadow-2xl relative z-20">
-      <div className="flex items-center gap-4">
+    <div className="h-16 px-4 sm:px-6 flex items-center justify-between bg-white/[0.02] backdrop-blur-3xl border-b border-white/5 shadow-2xl relative z-20">
+      <div className="flex items-center gap-3 sm:gap-4">
+        
+        {/* Mobile Back Button */}
+        <button 
+          onClick={() => setSelectedChat(null)}
+          className="sm:hidden p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all"
+          title="Back to chat list"
+        >
+          <ArrowLeft size={18} />
+        </button>
+
         {/* Avatar */}
         <div className="relative group">
           <div className="size-11 rounded-2xl overflow-hidden shadow-2xl ring-2 ring-white/10 transition-all duration-500 group-hover:rounded-xl">
@@ -69,6 +105,13 @@ const ChatHeader = () => {
         >
           <Search size={18} />
         </button>
+        <button 
+          onClick={handleExportChat}
+          className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-white hover:bg-white/5 transition-all"
+          title="Export Chat"
+        >
+          <Download size={18} />
+        </button>
         {!isGroup && (
           <button onClick={handleStartCall} className="btn btn-ghost btn-sm btn-circle text-slate-400 hover:text-white hover:bg-white/5 transition-all">
             <Video size={18} />
@@ -77,9 +120,30 @@ const ChatHeader = () => {
         
         <div className="w-[1px] h-6 bg-white/5 mx-2" />
         
+        {/* Visible Quick AI Actions */}
+        <button
+          onClick={() => runAIFeature("auto_reply")}
+          disabled={isAILoading}
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/20 text-xs font-bold transition-all shadow-sm group"
+          title="Generate 3 Quick Replies"
+        >
+          <Sparkles size={13} className="text-purple-400 group-hover:rotate-12 transition-transform" />
+          <span>Auto Reply</span>
+        </button>
+
+        <button
+          onClick={() => runAIFeature("summary")}
+          disabled={isAILoading}
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-300 border border-blue-500/20 text-xs font-bold transition-all shadow-sm group"
+          title="Summarize Chat Recap"
+        >
+          <Sparkles size={13} className="text-blue-400 group-hover:rotate-12 transition-transform" />
+          <span>Summarize</span>
+        </button>
+
         <div className="relative group">
           <button 
-            className={`btn btn-sm px-5 gap-2 rounded-xl border-none shadow-2xl transition-all duration-500 ${
+            className={`btn btn-sm px-4 gap-2 rounded-xl border-none shadow-2xl transition-all duration-500 ${
               isAIHubOpen 
                 ? 'bg-gradient-to-r from-[#8b5cf6] to-[#5865F2] text-white shadow-purple-500/30' 
                 : isAILoading 

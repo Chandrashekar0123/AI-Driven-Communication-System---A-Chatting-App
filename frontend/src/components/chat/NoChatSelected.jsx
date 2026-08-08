@@ -1,6 +1,17 @@
 import { MessageSquare, Sparkles, MessageCircle, Send } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useChatStore } from "../../store/useChatStore";
 
 const NoChatSelected = () => {
+  const navigate = useNavigate();
+  const { users, setSelectedChat } = useChatStore();
+
+  const handleDirectMessaging = () => {
+    if (users && users.length > 0) {
+      setSelectedChat(users[0]);
+    }
+  };
+
   return (
     <div className="w-full flex-1 flex flex-col items-center justify-center p-16 bg-[#313338] relative overflow-hidden">
       {/* Decorative Discord-style glow */}
@@ -31,21 +42,27 @@ const NoChatSelected = () => {
 
         {/* Info Tiles */}
         <div className="pt-8 grid grid-cols-2 gap-4">
-          <div className="p-5 rounded-2xl bg-[#2B2D31] border border-white/5 text-left space-y-3 group hover:bg-[#35373C] transition-all cursor-pointer shadow-lg">
+          <div 
+            onClick={handleDirectMessaging}
+            className="p-5 rounded-2xl bg-[#2B2D31] border border-white/5 text-left space-y-3 group hover:bg-[#35373C] hover:border-purple-500/30 transition-all cursor-pointer shadow-lg"
+          >
             <div className="size-10 rounded-xl bg-[#5865F2]/10 flex items-center justify-center">
                <MessageCircle className="size-5 text-[#5865F2]" />
             </div>
             <div>
-              <h4 className="text-sm font-bold text-white">Direct Messaging</h4>
+              <h4 className="text-sm font-bold text-white group-hover:text-purple-400 transition-colors">Direct Messaging</h4>
               <p className="text-[11px] text-[#949BA4] font-medium leading-relaxed">Fast, real-time communication with your contacts.</p>
             </div>
           </div>
-          <div className="p-5 rounded-2xl bg-[#2B2D31] border border-white/5 text-left space-y-3 group hover:bg-[#35373C] transition-all cursor-pointer shadow-lg">
-             <div className="size-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Send className="size-5 text-primary" />
+          <div 
+            onClick={() => navigate("/ai-chat")}
+            className="p-5 rounded-2xl bg-[#2B2D31] border border-white/5 text-left space-y-3 group hover:bg-[#35373C] hover:border-purple-500/30 transition-all cursor-pointer shadow-lg"
+          >
+             <div className="size-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                <Send className="size-5 text-purple-400" />
              </div>
             <div>
-              <h4 className="text-sm font-bold text-white">AI Assistant Hub</h4>
+              <h4 className="text-sm font-bold text-white group-hover:text-purple-400 transition-colors">AI Assistant Hub</h4>
               <p className="text-[11px] text-[#949BA4] font-medium leading-relaxed">Summaries, translations, and smart suggestions.</p>
             </div>
           </div>

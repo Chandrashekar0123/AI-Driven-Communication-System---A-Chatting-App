@@ -54,6 +54,15 @@ const messageSchema = new mongoose.Schema(
         emoji: String,
       }
     ],
+    poll: {
+      question: { type: String },
+      options: [
+        {
+          optionText: { type: String, required: true },
+          votes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        },
+      ],
+    },
     expiresAt: {
       type: Date,
       default: null,

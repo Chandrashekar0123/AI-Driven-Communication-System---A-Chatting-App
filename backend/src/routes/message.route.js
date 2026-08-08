@@ -11,10 +11,12 @@ import {
   markAsSeen,
   editMessage,
   reactToMessage,
-  addContact,
   searchUser,
+  addContact,
   getActionItems,
-  searchMessages
+  searchMessages,
+  aiSmartSearchMessages,
+  votePoll
 } from "../controllers/message.controller.js";
 
 const router = express.Router();
@@ -26,6 +28,8 @@ router.get("/recommendations/:id", protectRoute, getAIRecommendations);
 router.get("/summary/:id", protectRoute, getChatSummary);
 router.get("/action-items/:id", protectRoute, getActionItems);
 router.get("/search/:id", protectRoute, searchMessages);
+router.post("/ai-search/:id", protectRoute, aiSmartSearchMessages);
+router.post("/poll/vote/:id", protectRoute, votePoll);
 router.get("/:id", protectRoute, getMessages);
 
 router.post("/send/:id", protectRoute, sendMessage);

@@ -64,6 +64,20 @@ app.use(
 );
 
 // Routes
+app.get("/api", (req, res) => {
+  res.json({
+    status: "online",
+    message: "AI-Driven Communication System API is running smoothly 🚀",
+    endpoints: {
+      auth: "/api/auth",
+      messages: "/api/messages",
+      groups: "/api/groups",
+      status: "/api/status"
+    },
+    timestamp: new Date()
+  });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/groups", groupRoutes);

@@ -3,7 +3,8 @@ import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-const BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.MODE === "development" ? "http://localhost:5001" : "https://ai-driven-communication-system-a.onrender.com");
+const RAW_URL = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || (import.meta.env.MODE === "development" ? "http://localhost:5001" : "https://ai-driven-communication-system-a.onrender.com");
+const BASE_URL = RAW_URL.replace(/\/api\/?$/, "");
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,

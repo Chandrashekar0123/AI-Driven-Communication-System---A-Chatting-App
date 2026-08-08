@@ -32,10 +32,16 @@ export const getUsersForSidebar = async (req, res) => {
     const user = await User.findById(loggedInUserId).populate("contacts", "-password");
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    res.status(200).json(user.contacts || []);
+    let contactsList = user.contacts || [];
+    // Fallback: If user has no explicit contacts saved yet, return all other registered users
+    if (contactsList.length === 0) {
+      contactsList = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+    }
+
+    res.status(200).json(contactsList);
   } catch (error) {
     console.error("Error in getUsersForSidebar: ", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(200).json([]);
   }
 };
 

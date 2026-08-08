@@ -5,11 +5,13 @@ export const generateToken = (userId, res) => {
     expiresIn: "7d",
   });
 
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL === "1" || process.env.RENDER === "true";
+
   res.cookie("jwt", token, {
     maxAge: 7 * 24 * 60 * 60 * 1000, // MS
-    httpOnly: true, // prevent XSS attacks cross-site scripting attacks
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", // "none" allows cross-domain cookies in prod
-    secure: process.env.NODE_ENV === "production",
+    httpOnly: true,
+    sameSite: isProduction ? "none" : "lax",
+    secure: isProduction,
   });
 
   return token;

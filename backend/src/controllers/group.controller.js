@@ -36,10 +36,10 @@ export const getGroups = async (req, res) => {
   try {
     const userId = req.user._id;
     const groups = await Group.find({ members: userId }).populate("members", "fullName profilePic");
-    res.status(200).json(groups);
+    res.status(200).json(groups || []);
   } catch (error) {
     console.error("Error in getGroups:", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(200).json([]);
   }
 };
 
@@ -48,10 +48,10 @@ export const getPublicGroups = async (req, res) => {
     const userId = req.user._id;
     // Find public groups where the user is NOT a member
     const groups = await Group.find({ isPublic: true, members: { $ne: userId } });
-    res.status(200).json(groups);
+    res.status(200).json(groups || []);
   } catch (error) {
     console.error("Error in getPublicGroups:", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(200).json([]);
   }
 };
 

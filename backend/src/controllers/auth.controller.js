@@ -45,7 +45,7 @@ export const signup = async (req, res) => {
     const newUser = new User(newUserData);
     await newUser.save();
 
-    generateToken(newUser._id, res);
+    const token = generateToken(newUser._id, res);
 
     res.status(201).json({
       _id: newUser._id,
@@ -53,6 +53,7 @@ export const signup = async (req, res) => {
       email: newUser.email,
       phoneNumber: newUser.phoneNumber,
       profilePic: newUser.profilePic,
+      token,
     });
   } catch (error) {
     console.error("CRITICAL: Signup Error Details:", error.stack);
@@ -83,7 +84,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    generateToken(user._id, res);
+    const token = generateToken(user._id, res);
 
     res.status(200).json({
       _id: user._id,
@@ -91,6 +92,7 @@ export const login = async (req, res) => {
       email: user.email,
       phoneNumber: user.phoneNumber,
       profilePic: user.profilePic,
+      token,
     });
   } catch (error) {
     console.log("Error in login controller", error.stack);
@@ -118,23 +120,13 @@ export const updateProfile = async (req, res) => {
     if (status !== undefined) updates.status = status;
 
     if (profilePic) {
-      try {
-        const uploadResponse = await cloudinary.uploader.upload(profilePic);
-        updates.profilePic = uploadResponse.secure_url;
-      } catch (cloudinaryErr) {
-        console.warn("Cloudinary upload failed, storing profilePic directly in MongoDB database:", cloudinaryErr.message);
-        updates.profilePic = profilePic;
-      }
+      const uploadResponse = await cloudinary.uploader.upload(profilePic);
+      updates.profilePic = uploadResponse.secure_url;
     }
     
     if (coverPhoto) {
-      try {
-        const uploadResponse = await cloudinary.uploader.upload(coverPhoto);
-        updates.coverPhoto = uploadResponse.secure_url;
-      } catch (cloudinaryErr) {
-        console.warn("Cloudinary upload failed, storing coverPhoto directly in MongoDB database:", cloudinaryErr.message);
-        updates.coverPhoto = coverPhoto;
-      }
+      const uploadResponse = await cloudinary.uploader.upload(coverPhoto);
+      updates.coverPhoto = uploadResponse.secure_url;
     }
 
     if (Object.keys(updates).length === 0) {

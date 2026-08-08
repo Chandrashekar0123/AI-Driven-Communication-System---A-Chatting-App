@@ -198,6 +198,69 @@ async function callHuggingFace(feature, message, history) {
   return transformed;
 }
 
+// ─── 100% Free Open-Source Pollinations AI LLM Call (No API Key Required) ────
+async function callPollinationsAI(feature, message, history) {
+  const prompt = buildPrompt(feature, message, history);
+  console.log(`[AI] Trying 100% Free Open-Source Pollinations AI for "${feature}"`);
+
+  const models = ["openai", "qwen-coder", "mistral"];
+  for (const model of models) {
+    try {
+      const res = await fetch("https://text.pollinations.ai/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            { role: "system", content: "You are an AI assistant inside a chat app. Always return valid JSON matching requested output format." },
+            { role: "user", content: prompt }
+          ],
+          model,
+          jsonMode: true
+        })
+      });
+
+      if (res.ok) {
+        let text = await res.text();
+        text = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+        const s = text.indexOf("{"), e = text.lastIndexOf("}");
+        if (s !== -1 && e !== -1) {
+          const parsed = JSON.parse(text.substring(s, e + 1));
+          console.log(`[AI] ✅ 100% Free Open-Source Pollinations AI model "${model}" succeeded for "${feature}"`);
+          return parsed;
+        }
+      }
+    } catch (err) {
+      console.warn(`[AI] Pollinations AI model "${model}" info:`, err.message.substring(0, 80));
+    }
+  }
+  throw new Error("Pollinations AI failed");
+}
+
+// ─── Gemini AI Call ──────────────────────────────────────────────────────────
+async function callGeminiAI(feature, message, history) {
+  if (!genAI) throw new Error("Google Gemini API key not configured");
+  const prompt = buildPrompt(feature, message, history);
+
+  for (const modelName of GEMINI_MODELS) {
+    try {
+      console.log(`[AI] Trying Gemini model: ${modelName} for "${feature}"`);
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const res = await model.generateContent(prompt);
+      let text = res.response?.text()?.trim() || "";
+      text = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+      const s = text.indexOf("{"), e = text.lastIndexOf("}");
+      if (s !== -1 && e !== -1) {
+        const parsed = JSON.parse(text.substring(s, e + 1));
+        console.log(`[AI] ✅ Gemini succeeded with model "${modelName}" for "${feature}"`);
+        return parsed;
+      }
+    } catch (err) {
+      console.warn(`[AI] Gemini model "${modelName}" attempt info:`, err.message.substring(0, 80));
+    }
+  }
+  throw new Error("Gemini AI models failed");
+}
+
 // ─── OpenAI Call ─────────────────────────────────────────────────────────────
 async function callOpenAI(feature, message, history) {
   if (!OPENAI_KEY) throw new Error("OpenAI API key not configured");
@@ -412,12 +475,21 @@ export const getAIResponse = async (feature, message, history = [], userInfo = n
     }
   }
 
-  // 3. Secondary Hugging Face LLM attempt if specific feature handler didn't return
-  if (!result && hfKey) {
+  // 3. Try 100% Free Open-Source Pollinations AI (Llama 3.3, Qwen 2.5, Mistral - No API Key Required)
+  if (!result) {
     try {
-      result = await callHuggingFaceLLM(feature, message, history);
-    } catch (llmErr) {
-      console.warn(`[AI] HuggingFace LLM fallback warning: ${llmErr.message.substring(0, 80)}`);
+      result = await callPollinationsAI(feature, message, history);
+    } catch (polErr) {
+      console.warn(`[AI] Pollinations AI attempt info: ${polErr.message.substring(0, 80)}`);
+    }
+  }
+
+  // 4. Try Gemini AI
+  if (!result && GEMINI_KEY) {
+    try {
+      result = await callGeminiAI(feature, message, history);
+    } catch (gErr) {
+      console.warn(`[AI] Gemini attempt info: ${gErr.message.substring(0, 80)}`);
     }
   }
 

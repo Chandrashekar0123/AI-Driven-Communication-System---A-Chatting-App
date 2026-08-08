@@ -258,12 +258,33 @@ function smartLocalReply(message, userInfo) {
     return ["I can translate messages, summarize conversations, answer questions, extract action items, generate smart replies, and much more! 💡"];
   }
 
-  // Greeting patterns
+  // Doing what / What are you doing questions
+  if (/what (are|r)? (you|u)? doing|wt (are|r)? (you|u)? doing|wtd|doing what|what u doing/.test(msg)) {
+    return [
+      "Just hanging out and helping with chats! 🚀 What about you?",
+      "I'm keeping track of messages and ready to assist you! 😊",
+      "Not much, just here to assist! How's your day going?"
+    ];
+  }
+
+  // Where are you / Where from
+  if (/where (are|r)? (you|u)?( from)?|where do you live|where r u/.test(msg)) {
+    return [
+      "I live right here inside your chat platform! ☁️",
+      "I'm hosted in the cloud, always available 24/7! ⚡"
+    ];
+  }
+
+  // Greeting & Casual Check-in patterns
   if (/^(hi|hey|hello|hlo|helo|hii|yo|sup|wassup|what'?s up|howdy)[\s!?]*$/.test(msg)) {
     return [userName ? `Hey ${userName}! 👋` : "Hey! 👋", "Hi there! How can I help you today?", "Hello! What's up?"];
   }
 
-  if (/how are you|how r u|how u doing|how's it going|howdy|how have you been/.test(msg)) {
+  // Morning / Night
+  if (/good morning|gm\b/.test(msg)) return [`Good morning ${userName || ""}! ☀️ Have a productive day!`, "Morning! How can I help you today?"];
+  if (/good night|gn\b|sweet dreams/.test(msg)) return [`Good night ${userName || ""}! 🌙 Sleep well!`, "Night! Catch you tomorrow 👋"];
+
+  if (/how are you|how r u|how u doing|how's it going|howdy|how have you been|wbu|hbu|what about you/.test(msg)) {
     return ["I'm doing great, thanks for asking! 😊 How are you?", "All good! How is your day going?", "Pretty well! How can I assist you today?"];
   }
 

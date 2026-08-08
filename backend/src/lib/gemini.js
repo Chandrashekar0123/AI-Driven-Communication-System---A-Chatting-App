@@ -1,25 +1,16 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import NodeCache from "node-cache";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 // ─── API Keys ────────────────────────────────────────────────────────────────
-const GEMINI_KEY    = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY;
-const HF_KEY        = process.env.HUGGINGFACE_API_KEY;
-const OPENAI_KEY    = process.env.OPENAI_API_KEY;
+const HF_KEY = process.env.HUGGINGFACE_API_KEY;
+const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
-if (!GEMINI_KEY) console.warn("⚠️  GOOGLE_API_KEY missing");
-if (!HF_KEY)     console.warn("⚠️  HUGGINGFACE_API_KEY missing – HuggingFace fallback disabled");
-if (!OPENAI_KEY) console.warn("⚠️  OPENAI_API_KEY missing – OpenAI fallback disabled");
+if (!HF_KEY) console.warn("⚠️  HUGGINGFACE_API_KEY missing – using open-source public router");
 
 // ─── In-Memory Cache (TTL: 5 min) ────────────────────────────────────────────
 const aiCache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
-
-// ─── Gemini Setup ─────────────────────────────────────────────────────────────
-const genAI = GEMINI_KEY ? new GoogleGenerativeAI(GEMINI_KEY) : null;
-// Try lite models too (higher rate limits on free tier)
-const GEMINI_MODELS = ["gemini-2.0-flash-lite", "gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
 
 // ─── Strict JSON Prompt ───────────────────────────────────────────────────────
 const buildPrompt = (feature, message, history) => {
@@ -236,30 +227,7 @@ async function callPollinationsAI(feature, message, history) {
   throw new Error("Pollinations AI failed");
 }
 
-// ─── Gemini AI Call ──────────────────────────────────────────────────────────
-async function callGeminiAI(feature, message, history) {
-  if (!genAI) throw new Error("Google Gemini API key not configured");
-  const prompt = buildPrompt(feature, message, history);
 
-  for (const modelName of GEMINI_MODELS) {
-    try {
-      console.log(`[AI] Trying Gemini model: ${modelName} for "${feature}"`);
-      const model = genAI.getGenerativeModel({ model: modelName });
-      const res = await model.generateContent(prompt);
-      let text = res.response?.text()?.trim() || "";
-      text = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      const s = text.indexOf("{"), e = text.lastIndexOf("}");
-      if (s !== -1 && e !== -1) {
-        const parsed = JSON.parse(text.substring(s, e + 1));
-        console.log(`[AI] ✅ Gemini succeeded with model "${modelName}" for "${feature}"`);
-        return parsed;
-      }
-    } catch (err) {
-      console.warn(`[AI] Gemini model "${modelName}" attempt info:`, err.message.substring(0, 80));
-    }
-  }
-  throw new Error("Gemini AI models failed");
-}
 
 // ─── OpenAI Call ─────────────────────────────────────────────────────────────
 async function callOpenAI(feature, message, history) {
@@ -484,14 +452,7 @@ export const getAIResponse = async (feature, message, history = [], userInfo = n
     }
   }
 
-  // 4. Try Gemini AI
-  if (!result && GEMINI_KEY) {
-    try {
-      result = await callGeminiAI(feature, message, history);
-    } catch (gErr) {
-      console.warn(`[AI] Gemini attempt info: ${gErr.message.substring(0, 80)}`);
-    }
-  }
+
 
   // 5. Try OpenAI
   if (!result && OPENAI_KEY) {

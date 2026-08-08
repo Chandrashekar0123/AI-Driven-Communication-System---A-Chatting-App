@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 
 const AIChatbotPage = () => {
   const [messages, setMessages] = useState([
-    { id: 1, role: "bot", text: "Hey! I'm your AI assistant powered by Gemini 2.5. Ask me anything — I can help you summarize chats, translate messages, suggest replies, and more! 🚀" }
+    { id: 1, role: "bot", text: "Hey! I'm your AI assistant powered by Hugging Face Open-Source AI (Qwen 2.5 & Llama 3.2). Ask me anything — I can help you summarize chats, translate messages, suggest replies, and more! 🚀" }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -86,7 +86,7 @@ const AIChatbotPage = () => {
             </div>
             <div>
               <h1 className="text-[15px] font-black text-white tracking-tight">AI Assistant</h1>
-              <p className="text-[10px] text-purple-400 font-bold uppercase tracking-widest">Gemini 2.5 · HuggingFace · OpenAI</p>
+              <p className="text-[10px] text-purple-400 font-bold uppercase tracking-widest">HuggingFace Open-Source AI · Qwen 2.5 · Llama 3.2</p>
             </div>
           </div>
         </div>

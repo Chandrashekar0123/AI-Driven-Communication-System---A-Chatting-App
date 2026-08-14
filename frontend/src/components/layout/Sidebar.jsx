@@ -103,33 +103,51 @@ const Sidebar = () => {
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 premium-scrollbar">
-        {filteredChats.map((chat) => (
-          <button
-            key={chat._id}
-            onClick={() => setSelectedChat(chat)}
-            className={`w-full px-4 py-4 flex items-center gap-4 rounded-2xl transition-all duration-300 group relative overflow-hidden ${selectedChat?._id === chat._id ? "bg-white/10 text-white shadow-xl ring-1 ring-white/10" : "text-slate-400 hover:bg-white/[0.03] hover:text-white hover:translate-x-1"}`}
-          >
-            <div className="relative shrink-0">
-              <img src={chat.profilePic || (chat.type === 'group' ? "/group-avatar.png" : "/avatar.png")} alt={chat.fullName || chat.name} className={`size-12 object-cover rounded-xl shadow-2xl transition-all duration-500 ${selectedChat?._id === chat._id ? 'rounded-lg scale-105' : 'group-hover:rounded-lg'}`} />
-              {chat.type === 'user' && onlineUsers.includes(chat._id) && <span className="absolute -bottom-1 -right-1 size-4 bg-[#23A559] rounded-full ring-4 ring-[#12141a] shadow-2xl" />}
+        {filteredChats.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-3 h-full">
+            <div className="size-12 rounded-2xl bg-white/5 flex items-center justify-center text-purple-400 border border-white/5 shadow-inner">
+              <Users className="size-6" />
             </div>
-            <div className="text-left flex-1 min-w-0 relative z-10">
-              <div className="flex justify-between items-center mb-1">
-                <span className="font-black text-[13px] tracking-tight truncate">{chat.fullName || chat.name}</span>
-                {unreadCounts[chat._id] > 0 && <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-lg min-w-[18px] text-center shadow-lg shadow-rose-500/30">{unreadCounts[chat._id]}</span>}
-              </div>
-              <div className="text-[10px] truncate flex items-center gap-1.5 font-bold">
-                {typingUsers[chat._id]?.length > 0 ? (
-                  <span className="text-purple-400 animate-pulse font-bold">Typing...</span>
-                ) : (
-                  <span className="opacity-50 font-medium">
-                    {chat.type === 'group' ? 'Group Chat' : (onlineUsers.includes(chat._id) ? 'Online' : 'Offline')}
-                  </span>
-                )}
-              </div>
+            <div>
+              <p className="text-xs font-bold text-slate-300">No Conversations Yet</p>
+              <p className="text-[10px] text-slate-500 mt-1">Add a friend using their username, email, or phone number to start chatting!</p>
             </div>
-          </button>
-        ))}
+            <button
+              onClick={() => setShowInviteModal(true)}
+              className="btn btn-xs bg-purple-500 hover:bg-purple-600 border-none text-white font-bold rounded-xl px-4 py-2 mt-2 shadow-lg shadow-purple-500/20"
+            >
+              <UserPlus className="size-3 mr-1" /> Add Connection
+            </button>
+          </div>
+        ) : (
+          filteredChats.map((chat) => (
+            <button
+              key={chat._id}
+              onClick={() => setSelectedChat(chat)}
+              className={`w-full px-4 py-4 flex items-center gap-4 rounded-2xl transition-all duration-300 group relative overflow-hidden ${selectedChat?._id === chat._id ? "bg-white/10 text-white shadow-xl ring-1 ring-white/10" : "text-slate-400 hover:bg-white/[0.03] hover:text-white hover:translate-x-1"}`}
+            >
+              <div className="relative shrink-0">
+                <img src={chat.profilePic || (chat.type === 'group' ? "/group-avatar.png" : "/avatar.png")} alt={chat.fullName || chat.name} className={`size-12 object-cover rounded-xl shadow-2xl transition-all duration-500 ${selectedChat?._id === chat._id ? 'rounded-lg scale-105' : 'group-hover:rounded-lg'}`} />
+                {chat.type === 'user' && onlineUsers.includes(chat._id) && <span className="absolute -bottom-1 -right-1 size-4 bg-[#23A559] rounded-full ring-4 ring-[#12141a] shadow-2xl" />}
+              </div>
+              <div className="text-left flex-1 min-w-0 relative z-10">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-black text-[13px] tracking-tight truncate">{chat.fullName || chat.name}</span>
+                  {unreadCounts[chat._id] > 0 && <span className="bg-rose-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-lg min-w-[18px] text-center shadow-lg shadow-rose-500/30">{unreadCounts[chat._id]}</span>}
+                </div>
+                <div className="text-[10px] truncate flex items-center gap-1.5 font-bold">
+                  {typingUsers[chat._id]?.length > 0 ? (
+                    <span className="text-purple-400 animate-pulse font-bold">Typing...</span>
+                  ) : (
+                    <span className="opacity-50 font-medium">
+                      {chat.type === 'group' ? 'Group Chat' : (onlineUsers.includes(chat._id) ? 'Online' : 'Offline')}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
+          ))
+        )}
       </div>
 
       <div className="p-4 bg-black/40 backdrop-blur-3xl border-t border-white/5 flex items-center gap-3">

@@ -432,6 +432,18 @@ export const useChatStore = create((set, get) => ({
         messages: get().messages.map(m => m._id === messageId ? { ...m, poll } : m)
       });
     });
+
+    socket.on("contactAdded", (newContact) => {
+      console.log("DEBUG: Received contactAdded via socket:", newContact);
+      set((state) => ({
+        users: state.users.some((u) => u._id === newContact._id)
+          ? state.users
+          : [...state.users, newContact],
+      }));
+      toast.success(`${newContact.fullName || "Someone"} connected with you!`, {
+        icon: "👥",
+      });
+    });
   },
 
   votePoll: async (messageId, optionIndex) => {
@@ -458,6 +470,7 @@ export const useChatStore = create((set, get) => ({
     socket.off("messagesSeen");
     socket.off("messageEdited");
     socket.off("messageReaction");
+    socket.off("contactAdded");
   },
 
   setSelectedChat: (chat) => {

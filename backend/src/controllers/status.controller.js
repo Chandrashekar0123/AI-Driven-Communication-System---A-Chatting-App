@@ -1,17 +1,48 @@
 import Status from "../models/status.model.js";
+import User from "../models/user.model.js";
+import Message from "../models/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 
-// Fetch statuses of the current user and their contacts
+// Helper to get allowed isolated contact IDs for a given user
+const getIsolatedUserIds = async (userId) => {
+  const user = await User.findById(userId).select("contacts");
+  const savedContactIds = user ? (user.contacts || []) : [];
+
+  const invitedByUsers = await User.find({ contacts: userId }).select("_id");
+  const invitedByIds = invitedByUsers.map((u) => u._id);
+
+  const messages = await Message.find({
+    $or: [
+      { senderId: userId, receiverId: { $ne: null } },
+      { receiverId: userId, senderId: { $ne: null } }
+    ]
+  }).select("senderId receiverId");
+
+  const messageUserIds = [];
+  messages.forEach((msg) => {
+    if (msg.senderId && msg.senderId.toString() !== userId.toString()) messageUserIds.push(msg.senderId);
+    if (msg.receiverId && msg.receiverId.toString() !== userId.toString()) messageUserIds.push(msg.receiverId);
+  });
+
+  return Array.from(
+    new Set([
+      userId.toString(),
+      ...savedContactIds.map((id) => id.toString()),
+      ...invitedByIds.map((id) => id.toString()),
+      ...messageUserIds.map((id) => id.toString())
+    ])
+  );
+};
+
+// Fetch statuses of the current user and their isolated contacts
 export const getStatuses = async (req, res) => {
   try {
     const userId = req.user._id;
-
-    // In this app, users can see statuses of everyone they have messaged or is online
-    // To simplify, we'll return all active statuses in the DB for now, grouped by user
-    // A better approach would be to only return statuses of contacts.
+    const allowedUserIds = await getIsolatedUserIds(userId);
 
     const activeStatuses = await Status.find({
+      userId: { $in: allowedUserIds },
       expiresAt: { $gt: new Date() }
     }).populate("userId", "fullName profilePic").sort({ createdAt: -1 });
 
@@ -51,8 +82,14 @@ export const createStatus = async (req, res) => {
 
     const populatedStatus = await Status.findById(newStatus._id).populate("userId", "fullName profilePic");
 
-    // Broadcast the new status to all users in real-time
-    io.emit("newStatus", populatedStatus);
+    // Broadcast the new status ONLY to isolated contacts in real-time
+    const allowedUserIds = await getIsolatedUserIds(userId);
+    allowedUserIds.forEach((contactId) => {
+      const socketId = getReceiverSocketId(contactId);
+      if (socketId) {
+        io.to(socketId).emit("newStatus", populatedStatus);
+      }
+    });
 
     res.status(201).json(populatedStatus);
   } catch (error) {

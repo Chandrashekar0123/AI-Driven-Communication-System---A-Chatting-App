@@ -30,14 +30,46 @@ export const searchUser = async (req, res) => {
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
-    const user = await User.findById(loggedInUserId).populate("contacts", "-password");
+
+    // 1. Explicit contacts saved by user
+    const user = await User.findById(loggedInUserId).select("contacts");
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    let contactsList = user.contacts || [];
-    // Fallback: If user has no explicit contacts saved yet, return all other registered users
-    if (contactsList.length === 0) {
-      contactsList = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
-    }
+    const savedContactIds = user.contacts || [];
+
+    // 2. Users who have saved/invited loggedInUserId in their contacts
+    const invitedByUsers = await User.find({ contacts: loggedInUserId }).select("_id");
+    const invitedByIds = invitedByUsers.map((u) => u._id);
+
+    // 3. Users with whom loggedInUserId has exchanged 1-on-1 messages
+    const messages = await Message.find({
+      $or: [
+        { senderId: loggedInUserId, receiverId: { $ne: null } },
+        { receiverId: loggedInUserId, senderId: { $ne: null } }
+      ]
+    }).select("senderId receiverId");
+
+    const messageUserIds = [];
+    messages.forEach((msg) => {
+      if (msg.senderId && msg.senderId.toString() !== loggedInUserId.toString()) {
+        messageUserIds.push(msg.senderId);
+      }
+      if (msg.receiverId && msg.receiverId.toString() !== loggedInUserId.toString()) {
+        messageUserIds.push(msg.receiverId);
+      }
+    });
+
+    // Combine all isolated user IDs (removing duplicates and excluding self)
+    const combinedIds = Array.from(
+      new Set([
+        ...savedContactIds.map((id) => id.toString()),
+        ...invitedByIds.map((id) => id.toString()),
+        ...messageUserIds.map((id) => id.toString())
+      ])
+    ).filter((id) => id !== loggedInUserId.toString());
+
+    // Return ONLY these isolated user contacts
+    const contactsList = await User.find({ _id: { $in: combinedIds } }).select("-password");
 
     res.status(200).json(contactsList);
   } catch (error) {
@@ -48,17 +80,22 @@ export const getUsersForSidebar = async (req, res) => {
 
 export const addContact = async (req, res) => {
   try {
-    const { contactId } = req.body; // username or phoneNumber
+    const { contactId } = req.body; // email, phoneNumber, fullName, or _id
     const myId = req.user._id;
 
-    if (!contactId) return res.status(400).json({ error: "Username or Phone Number is required" });
+    if (!contactId) return res.status(400).json({ error: "Username, Email or Phone Number is required" });
 
-    const contactUser = await User.findOne({
-      $or: [
-        { email: contactId.toLowerCase() },
-        { phoneNumber: contactId }
-      ],
-    });
+    const searchConditions = [
+      { email: contactId.toLowerCase() },
+      { phoneNumber: contactId },
+      { fullName: { $regex: `^${contactId}$`, $options: "i" } }
+    ];
+
+    if (mongoose.Types.ObjectId.isValid(contactId)) {
+      searchConditions.push({ _id: contactId });
+    }
+
+    const contactUser = await User.findOne({ $or: searchConditions });
 
     if (!contactUser) return res.status(404).json({ error: "User not found" });
 
@@ -74,6 +111,13 @@ export const addContact = async (req, res) => {
     user.contacts.push(contactUser._id);
     await user.save();
 
+    // Emit real-time socket notification to contactUser so their UI updates if online
+    const receiverSocketId = getReceiverSocketId(contactUser._id.toString());
+    if (receiverSocketId) {
+      const myUserInfo = await User.findById(myId).select("-password");
+      io.to(receiverSocketId).emit("contactAdded", myUserInfo);
+    }
+
     res.status(200).json({ message: "Contact added successfully", contact: contactUser });
   } catch (error) {
     console.error("Error in addContact: ", error.message);
@@ -85,6 +129,17 @@ export const getMessages = async (req, res) => {
   try {
     const { id: chatId } = req.params;
     const myId = req.user._id;
+
+    // Check if chatId is a group and enforce member isolation
+    if (mongoose.Types.ObjectId.isValid(chatId)) {
+      const group = await Group.findById(chatId).lean();
+      if (group) {
+        const isMember = group.members.some((m) => m.toString() === myId.toString());
+        if (!isMember) {
+          return res.status(403).json({ error: "Access denied. You are not a member of this group." });
+        }
+      }
+    }
 
     const messages = await Message.find({
       $or: [
@@ -109,6 +164,15 @@ export const sendMessage = async (req, res) => {
 
     if (!text && !image && !file && !audio) {
       return res.status(400).json({ error: "Message content is required" });
+    }
+
+    if (groupId) {
+      const group = await Group.findById(groupId).lean();
+      if (!group) return res.status(404).json({ error: "Group not found" });
+      const isMember = group.members.some((m) => m.toString() === senderId.toString());
+      if (!isMember) {
+        return res.status(403).json({ error: "Access denied. You are not a member of this group." });
+      }
     }
 
     let imageUrl;

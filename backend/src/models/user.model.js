@@ -32,6 +32,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    coverPreset: {
+      type: String,
+      default: "from-purple-900 via-indigo-900 to-slate-900",
+    },
+    userPresence: {
+      type: String,
+      default: "Online",
+    },
     status: {
       type: String,
       default: "Hey there! I am using Chatty.",

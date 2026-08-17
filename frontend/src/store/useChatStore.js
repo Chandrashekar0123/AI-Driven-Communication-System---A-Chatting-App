@@ -302,13 +302,13 @@ export const useChatStore = create((set, get) => ({
 
   runAIFeature: async (feature, additionalData = {}) => {
     const { selectedChat } = get();
-    if (!selectedChat) return;
+    const chatId = selectedChat?._id || "chatbot-session";
 
     set({ isAILoading: true, aiResult: null });
     try {
       const res = await axiosInstance.post("/messages/ai", {
         feature,
-        chatId: selectedChat._id,
+        chatId,
         ...additionalData,
       });
       set({ aiResult: res.data });

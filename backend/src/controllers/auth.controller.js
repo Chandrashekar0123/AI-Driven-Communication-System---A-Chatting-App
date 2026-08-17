@@ -53,6 +53,11 @@ export const signup = async (req, res) => {
       email: newUser.email,
       phoneNumber: newUser.phoneNumber,
       profilePic: newUser.profilePic,
+      coverPhoto: newUser.coverPhoto,
+      coverPreset: newUser.coverPreset,
+      userPresence: newUser.userPresence,
+      bio: newUser.bio,
+      status: newUser.status,
       token,
     });
   } catch (error) {
@@ -92,6 +97,11 @@ export const login = async (req, res) => {
       email: user.email,
       phoneNumber: user.phoneNumber,
       profilePic: user.profilePic,
+      coverPhoto: user.coverPhoto,
+      coverPreset: user.coverPreset,
+      userPresence: user.userPresence,
+      bio: user.bio,
+      status: user.status,
       token,
     });
   } catch (error) {
@@ -112,21 +122,31 @@ export const logout = (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic, coverPhoto, bio, status } = req.body;
+    const { profilePic, coverPhoto, coverPreset, bio, status, userPresence } = req.body;
     const userId = req.user._id;
 
     const updates = {};
     if (bio !== undefined) updates.bio = bio;
     if (status !== undefined) updates.status = status;
+    if (userPresence !== undefined) updates.userPresence = userPresence;
+    if (coverPreset !== undefined) updates.coverPreset = coverPreset;
 
-    if (profilePic) {
-      const uploadResponse = await cloudinary.uploader.upload(profilePic);
-      updates.profilePic = uploadResponse.secure_url;
+    if (profilePic !== undefined) {
+      if (profilePic && profilePic.startsWith("data:image")) {
+        const uploadResponse = await cloudinary.uploader.upload(profilePic);
+        updates.profilePic = uploadResponse.secure_url;
+      } else {
+        updates.profilePic = profilePic;
+      }
     }
-    
-    if (coverPhoto) {
-      const uploadResponse = await cloudinary.uploader.upload(coverPhoto);
-      updates.coverPhoto = uploadResponse.secure_url;
+
+    if (coverPhoto !== undefined) {
+      if (coverPhoto && coverPhoto.startsWith("data:image")) {
+        const uploadResponse = await cloudinary.uploader.upload(coverPhoto);
+        updates.coverPhoto = uploadResponse.secure_url;
+      } else {
+        updates.coverPhoto = coverPhoto;
+      }
     }
 
     if (Object.keys(updates).length === 0) {

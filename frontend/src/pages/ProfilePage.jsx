@@ -34,9 +34,9 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const [selectedImg, setSelectedImg] = useState(null);
   const [selectedCover, setSelectedCover] = useState(null);
-  const [activePreset, setActivePreset] = useState(COVER_PRESETS[0]);
+  const [activePreset, setActivePreset] = useState(authUser?.coverPreset || COVER_PRESETS[0]);
   const [copiedId, setCopiedId] = useState(false);
-  const [userPresence, setUserPresence] = useState("Online");
+  const [userPresence, setUserPresence] = useState(authUser?.userPresence || "Online");
 
   const [formData, setFormData] = useState({
     bio: "",
@@ -49,12 +49,23 @@ const ProfilePage = () => {
         bio: authUser.bio || "",
         status: authUser.status || "Hey there! I am using Chat app."
       });
+      if (authUser.coverPreset) {
+        setActivePreset(authUser.coverPreset);
+      }
+      if (authUser.userPresence) {
+        setUserPresence(authUser.userPresence);
+      }
     }
   }, [authUser]);
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Profile image size should be under 10MB");
+      return;
+    }
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -63,11 +74,17 @@ const ProfilePage = () => {
       setSelectedImg(base64Image);
       await updateProfile({ profilePic: base64Image });
     };
+    e.target.value = "";
   };
 
   const handleCoverUpload = async (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Cover photo size should be under 10MB");
+      return;
+    }
 
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -76,6 +93,18 @@ const ProfilePage = () => {
       setSelectedCover(base64Image);
       await updateProfile({ coverPhoto: base64Image });
     };
+    e.target.value = "";
+  };
+
+  const handlePresetSelect = async (preset) => {
+    setActivePreset(preset);
+    setSelectedCover(null);
+    await updateProfile({ coverPreset: preset, coverPhoto: "" });
+  };
+
+  const handlePresenceChange = async (newPresence) => {
+    setUserPresence(newPresence);
+    await updateProfile({ userPresence: newPresence });
   };
 
   const handleSaveInfo = async (e) => {
@@ -86,13 +115,31 @@ const ProfilePage = () => {
     });
   };
 
-  const copyUserId = () => {
+  const copyUserId = async () => {
     if (!authUser?._id) return;
-    navigator.clipboard.writeText(authUser._id);
-    setCopiedId(true);
-    toast.success("User ID copied to clipboard!");
-    setTimeout(() => setCopiedId(false), 2000);
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(authUser._id);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = authUser._id;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        textArea.remove();
+      }
+      setCopiedId(true);
+      toast.success("User ID copied to clipboard!");
+      setTimeout(() => setCopiedId(false), 2000);
+    } catch (err) {
+      toast.error("Failed to copy User ID");
+    }
   };
+
+  const currentCoverPhoto = selectedCover || authUser?.coverPhoto;
 
   return (
     <div className="min-h-screen bg-[#111214] text-[#DBDEE1] font-sans pb-12">
@@ -127,8 +174,18 @@ const ProfilePage = () => {
           
           {/* Cover Photo / Preset Banner */}
           <div className={`relative h-36 sm:h-48 bg-gradient-to-r ${activePreset} border-b border-white/5 group`}>
-            {(selectedCover || authUser?.coverPhoto) ? (
-              <img src={selectedCover || authUser.coverPhoto} alt="Cover" className="w-full h-full object-cover" />
+            {currentCoverPhoto ? (
+              <div className="w-full h-full relative">
+                <img src={currentCoverPhoto} alt="Cover" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => handlePresetSelect(activePreset)}
+                  className="absolute top-3 right-3 bg-black/70 hover:bg-black/90 backdrop-blur-md px-2.5 py-1 rounded-xl border border-white/10 text-[11px] font-bold text-red-300 hover:text-red-200 transition-all z-20"
+                  title="Remove uploaded image and use gradient preset"
+                >
+                  Remove Cover Photo
+                </button>
+              </div>
             ) : (
               <div className="w-full h-full flex items-center justify-center p-4">
                 <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-2xl border border-white/10 text-xs font-bold text-slate-300">
@@ -139,16 +196,17 @@ const ProfilePage = () => {
             )}
 
             {/* Gradient Preset Selector & Upload Button */}
-            <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-black/60 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 shadow-lg">
+            <div className="absolute bottom-3 right-3 flex items-center gap-2 bg-black/60 backdrop-blur-md p-1.5 rounded-2xl border border-white/10 shadow-lg z-20">
               {COVER_PRESETS.map((preset, idx) => (
                 <button
                   key={idx}
-                  onClick={() => { setSelectedCover(null); setActivePreset(preset); }}
-                  className={`size-5 rounded-full bg-gradient-to-r ${preset} border transition-all ${activePreset === preset && !selectedCover ? "ring-2 ring-purple-400 scale-110 border-white" : "border-white/20 opacity-70 hover:opacity-100"}`}
+                  type="button"
+                  onClick={() => handlePresetSelect(preset)}
+                  className={`size-5 rounded-full bg-gradient-to-r ${preset} border transition-all ${activePreset === preset && !currentCoverPhoto ? "ring-2 ring-purple-400 scale-110 border-white" : "border-white/20 opacity-70 hover:opacity-100"}`}
                   title={`Preset ${idx + 1}`}
                 />
               ))}
-              <label className="p-1 rounded-xl hover:bg-white/20 text-slate-300 hover:text-white cursor-pointer transition-all">
+              <label className="p-1 rounded-xl hover:bg-white/20 text-slate-300 hover:text-white cursor-pointer transition-all" title="Upload custom cover photo">
                 <Camera className="size-4" />
                 <input type="file" className="hidden" accept="image/*" onChange={handleCoverUpload} disabled={isUpdatingProfile} />
               </label>
@@ -209,8 +267,9 @@ const ProfilePage = () => {
               <div className="flex items-center gap-2 bg-[#2b2d31] p-1.5 rounded-2xl border border-white/5">
                 <select
                   value={userPresence}
-                  onChange={(e) => setUserPresence(e.target.value)}
-                  className="bg-[#1e1f22] text-xs font-bold text-white px-3 py-1.5 rounded-xl border border-white/10 outline-none focus:border-purple-500"
+                  onChange={(e) => handlePresenceChange(e.target.value)}
+                  disabled={isUpdatingProfile}
+                  className="bg-[#1e1f22] text-xs font-bold text-white px-3 py-1.5 rounded-xl border border-white/10 outline-none focus:border-purple-500 cursor-pointer"
                 >
                   <option value="Online">🟢 Online</option>
                   <option value="Away">🟡 Away</option>
@@ -219,8 +278,9 @@ const ProfilePage = () => {
                 </select>
 
                 <button
+                  type="button"
                   onClick={copyUserId}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 text-xs font-bold transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 text-xs font-bold transition-all active:scale-95"
                   title="Copy User ID"
                 >
                   {copiedId ? <Check size={13} /> : <Copy size={13} />}

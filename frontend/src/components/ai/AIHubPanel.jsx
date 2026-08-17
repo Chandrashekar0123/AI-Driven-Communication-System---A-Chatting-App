@@ -107,33 +107,34 @@ const AIHubPanel = () => {
         </button>
 
         {/* ── Auto Reply ────────────────────────────────────────────────── */}
-        {feature === "auto_reply" && Array.isArray(result) && (
+        {feature === "auto_reply" && (
           <div className="space-y-3">
             <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Suggested Replies</h5>
-            {result.map((r, i) => (
+            {(Array.isArray(result) ? result : [result]).map((r, i) => (
               <button
                 key={i}
+                type="button"
                 onClick={() => {
-                  useChatStore.getState().sendMessage({ text: r });
+                  useChatStore.getState().sendMessage({ text: String(r) });
                   useChatStore.getState().toggleAIHub();
                 }}
                 className="w-full text-left p-4 rounded-xl bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 text-sm font-bold text-white hover:from-purple-500/20 hover:to-blue-500/20 hover:border-purple-500/40 transition-all flex items-center gap-3"
               >
                 <Sparkles size={12} className="text-purple-400 shrink-0" />
-                {r}
+                {String(r)}
               </button>
             ))}
           </div>
         )}
 
         {/* ── Summary ───────────────────────────────────────────────────── */}
-        {feature === "summary" && Array.isArray(result) && (
+        {feature === "summary" && (
           <div className="space-y-3">
             <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Conversation Recap</h5>
-            {result.map((p, i) => (
+            {(Array.isArray(result) ? result : String(result).split("\n").filter(Boolean)).map((p, i) => (
               <div key={i} className="flex gap-3 p-4 rounded-xl bg-white/[0.03] border border-white/5">
                 <div className="mt-1.5 size-1.5 rounded-full bg-purple-500 shrink-0" />
-                <p className="text-xs font-semibold text-slate-300 leading-relaxed">{p}</p>
+                <p className="text-xs font-semibold text-slate-300 leading-relaxed">{String(p).replace(/^[•\-\*]\s*/, "")}</p>
               </div>
             ))}
           </div>
@@ -142,10 +143,10 @@ const AIHubPanel = () => {
         {/* ── Sentiment ─────────────────────────────────────────────────── */}
         {feature === "sentiment" && result && (
           <div className="text-center py-8 space-y-4 bg-white/[0.03] rounded-2xl border border-white/5">
-            <Smile className={`size-16 mx-auto ${result.sentiment === "Positive" ? "text-purple-400" : result.sentiment === "Negative" ? "text-rose-400" : "text-purple-400"}`} />
+            <Smile className={`size-16 mx-auto ${(result.sentiment || result) === "Positive" ? "text-purple-400" : (result.sentiment || result) === "Negative" ? "text-rose-400" : "text-purple-400"}`} />
             <div>
-              <h4 className="text-2xl font-black text-white uppercase tracking-tighter">{result.sentiment}</h4>
-              <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em] mt-1">{result.emotion}</p>
+              <h4 className="text-2xl font-black text-white uppercase tracking-tighter">{result.sentiment || String(result)}</h4>
+              <p className="text-[10px] text-slate-500 uppercase font-black tracking-[0.3em] mt-1">{result.emotion || "Analyzed Mood"}</p>
               {result.score && (
                 <div className="mt-3 mx-auto w-32">
                   <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
@@ -162,29 +163,31 @@ const AIHubPanel = () => {
         )}
 
         {/* ── Tasks ─────────────────────────────────────────────────────── */}
-        {feature === "tasks" && Array.isArray(result) && (
+        {feature === "tasks" && (
           <div className="space-y-3">
             <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Extracted Tasks</h5>
-            {result.map((t, i) => (
+            {(Array.isArray(result) ? result : [result]).map((t, i) => (
               <div key={i} className="p-4 rounded-xl bg-purple-500/5 border border-purple-500/20 space-y-2">
-                <div className="text-xs font-black text-purple-400">{t.task}</div>
-                <div className="flex justify-between items-center text-[9px] font-bold text-slate-500 uppercase tracking-widest pt-2 border-t border-white/5">
-                  <span className="flex items-center gap-1"><User size={9} /> {t.person || "Unassigned"}</span>
-                  <span className="flex items-center gap-1"><Calendar size={9} /> {t.deadline || "No deadline"}</span>
-                </div>
+                <div className="text-xs font-black text-purple-400">{typeof t === "object" ? t.task : String(t)}</div>
+                {typeof t === "object" && (
+                  <div className="flex justify-between items-center text-[9px] font-bold text-slate-500 uppercase tracking-widest pt-2 border-t border-white/5">
+                    <span className="flex items-center gap-1"><User size={9} /> {t.person || "Unassigned"}</span>
+                    <span className="flex items-center gap-1"><Calendar size={9} /> {t.deadline || "No deadline"}</span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
 
         {/* ── Key Phrases ───────────────────────────────────────────────── */}
-        {feature === "keyphrase" && Array.isArray(result) && (
+        {feature === "keyphrase" && (
           <div className="space-y-3">
             <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Key Topics</h5>
             <div className="flex flex-wrap gap-2">
-              {result.map((phrase, i) => (
+              {(Array.isArray(result) ? result : String(result).split(",")).map((phrase, i) => (
                 <span key={i} className="px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-xs font-bold text-yellow-300">
-                  {phrase}
+                  {String(phrase).trim()}
                 </span>
               ))}
             </div>
@@ -192,18 +195,19 @@ const AIHubPanel = () => {
         )}
 
         {/* ── Emoji Suggestions ─────────────────────────────────────────── */}
-        {feature === "emoji" && Array.isArray(result) && (
+        {feature === "emoji" && (
           <div className="space-y-3">
             <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Suggested Emojis</h5>
-            <div className="flex gap-4 justify-center py-6">
-              {result.map((emoji, i) => (
+            <div className="flex gap-4 justify-center py-6 flex-wrap">
+              {(Array.isArray(result) ? result : Array.from(String(result))).map((emoji, i) => (
                 <button
                   key={i}
-                  onClick={() => useChatStore.getState().sendMessage({ text: emoji })}
+                  type="button"
+                  onClick={() => useChatStore.getState().sendMessage({ text: String(emoji) })}
                   className="text-4xl hover:scale-125 transition-transform cursor-pointer"
                   title="Click to send"
                 >
-                  {emoji}
+                  {String(emoji)}
                 </button>
               ))}
             </div>
@@ -223,12 +227,12 @@ const AIHubPanel = () => {
         )}
 
         {/* ── Search Results ────────────────────────────────────────────── */}
-        {feature === "search" && Array.isArray(result) && (
+        {feature === "search" && (
           <div className="space-y-3">
             <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Matches Found</h5>
-            {result.map((m, i) => (
+            {(Array.isArray(result) ? result : [result]).map((m, i) => (
               <div key={i} className="p-4 rounded-xl bg-black/20 border border-white/5 text-xs text-slate-300 font-medium italic leading-relaxed">
-                &quot;{m}&quot;
+                &quot;{typeof m === 'string' ? m : JSON.stringify(m)}&quot;
               </div>
             ))}
           </div>
@@ -243,7 +247,8 @@ const AIHubPanel = () => {
             </div>
             {(feature === "tone" || feature === "grammar") && (
               <button
-                onClick={() => useChatStore.getState().sendMessage({ text: result })}
+                type="button"
+                onClick={() => useChatStore.getState().sendMessage({ text: typeof result === 'string' ? result : JSON.stringify(result) })}
                 className="w-full mt-2 py-2 rounded-xl bg-purple-500/20 border border-purple-500/30 text-xs font-bold text-purple-300 hover:bg-purple-500/30 transition-all"
               >
                 Send this message

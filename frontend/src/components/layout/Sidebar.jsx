@@ -156,11 +156,19 @@ const Sidebar = () => {
             <div className="size-10 rounded-xl overflow-hidden border border-white/10 shadow-lg group-hover:scale-105 transition-transform">
               <img src={authUser.profilePic || "/avatar.png"} alt="me" className="w-full h-full object-cover" />
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 size-3 bg.emerald-500 bg-[#23A559] rounded-full ring-2 ring-black"></div>
+            <div className={`absolute -bottom-0.5 -right-0.5 size-3 rounded-full ring-2 ring-black ${
+              (authUser.userPresence || "Online") === "Online" ? "bg-[#23A559]" :
+              authUser.userPresence === "Away" ? "bg-amber-400" :
+              authUser.userPresence === "Busy" ? "bg-rose-500" : "bg-slate-400"
+            }`}></div>
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-bold text-white truncate group-hover:text-purple-300 transition-colors">{authUser.fullName}</div>
-            <div className="text-[10px] text-emerald-400 font-semibold mt-0.5">Online</div>
+            <div className={`text-[10px] font-semibold mt-0.5 ${
+              (authUser.userPresence || "Online") === "Online" ? "text-emerald-400" :
+              authUser.userPresence === "Away" ? "text-amber-400" :
+              authUser.userPresence === "Busy" ? "text-rose-400" : "text-slate-400"
+            }`}>{authUser.userPresence || "Online"}</div>
           </div>
         </Link>
         <Link to="/settings" className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white transition-all shadow-md" title="Settings">
